@@ -1,0 +1,267 @@
+openapi: 3.1.0
+info:
+  title: Kunskapsriket API
+  version: 0.1.0
+  description: >
+    API between web (Phaser game + UI) and api (FastAPI). Errors use FastAPI's default
+    shape `{"detail": "..."}` with 404 for unknown ids and 422 for invalid input.
+servers:
+  - url: http://localhost:8001
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+              example: { status: ok }
+
+  /world:
+    get:
+      summary: Static world content (package 3)
+      responses:
+        "200":
+          description: Zones, mentors, quests, card titles and achievements
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/World" }
+              example:
+                zones:
+                  - { id: agentbyn, name: Agentbyn, topic: Kodagenter, bounds: { x: 0, y: 0, w: 20, h: 15 }, color: "#7fb069" }
+                mentors:
+                  - { id: ada, name: Ada, title: Kodagentveteranen, zone_id: agentbyn, position: { x: 8, y: 6 }, color: "#e07a5f", quest_id: q-ada-1 }
+                quests:
+                  - { id: q-ada-1, mentor_id: ada, title: Granska agentens kod, task: "Förklara tre saker du alltid kollar när en kodagent har skrivit en ändring.", kind: explain, xp: 50, card_id: c-review-ai-code }
+                cards:
+                  - { id: c-review-ai-code, title: Granska AI-genererad kod, mentor_id: ada }
+                achievements:
+                  - { id: first-quest, title: Första questen!, description: Klara din första quest. }
+
+  /players:
+    post:
+      summary: Create a player, or return the existing one with the same name (package 4)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 40 }
+            example: { name: Emma }
+      responses:
+        "200":
+          description: The player's progress
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Progress" }
+              example:
+                player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10
+                name: Emma
+                xp: 0
+                level: 1
+                xp_for_next_level: 100
+                completed_quests: []
+                cards: []
+                achievements: []
+
+  /players/{player_id}:
+    get:
+      summary: Get a player's progress (package 4)
+      parameters:
+        - { name: player_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The player's progress
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Progress" }
+        "404": { description: Unknown player }
+
+  /npcs/{npc_id}/chat:
+    post:
+      summary: Talk to a mentor agent (package 3)
+      description: >
+        Send an empty message to start the conversation (the mentor greets the player).
+        Conversation memory is kept per player and mentor during the server's lifetime.
+      parameters:
+        - { name: npc_id, in: path, required: true, schema: { type: string }, example: ada }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id, message]
+              properties:
+                player_id: { type: string, format: uuid }
+                message: { type: string, maxLength: 2000 }
+            example: { player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10, message: "Vad är en AGENTS.md?" }
+      responses:
+        "200":
+          description: The mentor's reply, and a quest if the mentor offers one
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatReply" }
+              example:
+                reply: "En AGENTS.md är som en onboarding-guide för din kodagent – ungefär som en README, men för maskinen…"
+                offered_quest_id: q-ada-1
+        "404": { description: Unknown mentor or player }
+
+  /quests/{quest_id}/attempt:
+    post:
+      summary: Submit an answer to a quest (package 4)
+      parameters:
+        - { name: quest_id, in: path, required: true, schema: { type: string }, example: q-ada-1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id, answer]
+              properties:
+                player_id: { type: string, format: uuid }
+                answer: { type: string, minLength: 1, maxLength: 4000 }
+            example: { player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10, answer: "Att testerna täcker ändringen, att den följer projektets konventioner och att inget onödigt har ändrats." }
+      responses:
+        "200":
+          description: Judgement, rewards and updated progress
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttemptResult" }
+              example:
+                passed: true
+                feedback: "Bra! Du fick med tester och scope. Tänk också på säkerhet, t.ex. hemligheter i koden."
+                xp_awarded: 50
+                new_card: { id: c-review-ai-code, title: Granska AI-genererad kod, mentor_id: ada, summary: "Läs AI-kod som en kollegas PR…", when_to_use: "Varje gång en agent ändrat kod.", pitfalls: "Att lita på att gröna tester räcker." }
+                new_achievements:
+                  - { id: first-quest, title: Första questen!, description: Klara din första quest. }
+                progress:
+                  player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10
+                  name: Emma
+                  xp: 50
+                  level: 1
+                  xp_for_next_level: 100
+                  completed_quests: [q-ada-1]
+                  cards: [{ id: c-review-ai-code, title: Granska AI-genererad kod, mentor_id: ada, summary: "Läs AI-kod som en kollegas PR…", when_to_use: "Varje gång en agent ändrat kod.", pitfalls: "Att lita på att gröna tester räcker." }]
+                  achievements: [{ id: first-quest, title: Första questen!, description: Klara din första quest. }]
+        "404": { description: Unknown quest or player }
+
+components:
+  schemas:
+    Point:
+      type: object
+      required: [x, y]
+      properties:
+        x: { type: integer }
+        y: { type: integer }
+    Rect:
+      type: object
+      required: [x, y, w, h]
+      properties:
+        x: { type: integer }
+        y: { type: integer }
+        w: { type: integer }
+        h: { type: integer }
+    Zone:
+      type: object
+      required: [id, name, topic, bounds, color]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        topic: { type: string }
+        bounds: { $ref: "#/components/schemas/Rect" }
+        color: { type: string, description: "Hex color, e.g. #7fb069" }
+    Mentor:
+      type: object
+      required: [id, name, title, zone_id, position, color, quest_id]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        title: { type: string }
+        zone_id: { type: string }
+        position: { $ref: "#/components/schemas/Point" }
+        color: { type: string }
+        quest_id: { type: string }
+    Quest:
+      type: object
+      required: [id, mentor_id, title, task, kind, xp, card_id]
+      properties:
+        id: { type: string }
+        mentor_id: { type: string }
+        title: { type: string }
+        task: { type: string }
+        kind: { type: string, enum: [explain, solve, choose] }
+        xp: { type: integer }
+        card_id: { type: string }
+    CardSummary:
+      type: object
+      required: [id, title, mentor_id]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        mentor_id: { type: string }
+    Card:
+      allOf:
+        - $ref: "#/components/schemas/CardSummary"
+        - type: object
+          required: [summary, when_to_use, pitfalls]
+          properties:
+            summary: { type: string }
+            when_to_use: { type: string }
+            pitfalls: { type: string }
+    Achievement:
+      type: object
+      required: [id, title, description]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+    World:
+      type: object
+      required: [zones, mentors, quests, cards, achievements]
+      properties:
+        zones: { type: array, items: { $ref: "#/components/schemas/Zone" } }
+        mentors: { type: array, items: { $ref: "#/components/schemas/Mentor" } }
+        quests: { type: array, items: { $ref: "#/components/schemas/Quest" } }
+        cards: { type: array, items: { $ref: "#/components/schemas/CardSummary" } }
+        achievements: { type: array, items: { $ref: "#/components/schemas/Achievement" } }
+    Progress:
+      type: object
+      required: [player_id, name, xp, level, xp_for_next_level, completed_quests, cards, achievements]
+      properties:
+        player_id: { type: string, format: uuid }
+        name: { type: string }
+        xp: { type: integer }
+        level: { type: integer }
+        xp_for_next_level: { type: integer }
+        completed_quests: { type: array, items: { type: string } }
+        cards: { type: array, items: { $ref: "#/components/schemas/Card" } }
+        achievements: { type: array, items: { $ref: "#/components/schemas/Achievement" } }
+    ChatReply:
+      type: object
+      required: [reply, offered_quest_id]
+      properties:
+        reply: { type: string }
+        offered_quest_id: { type: [string, "null"] }
+    AttemptResult:
+      type: object
+      required: [passed, feedback, xp_awarded, new_card, new_achievements, progress]
+      properties:
+        passed: { type: boolean }
+        feedback: { type: string }
+        xp_awarded: { type: integer, description: "0 if failed or already completed" }
+        new_card:
+          oneOf:
+            - $ref: "#/components/schemas/Card"
+            - type: "null"
+        new_achievements: { type: array, items: { $ref: "#/components/schemas/Achievement" } }
+        progress: { $ref: "#/components/schemas/Progress" }
