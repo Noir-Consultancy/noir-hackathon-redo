@@ -27,7 +27,9 @@ export function createHud() {
   const name = el("div", { className: "hud-name" });
   const fill = el("div", { className: "hud-xp-fill" });
   const xpText = el("span", { className: "hud-xp-text" });
-  const counts = el("div", { className: "hud-counts" });
+  const cardCount = el("span");
+  const badgeCount = el("span");
+  const counts = el("div", { className: "hud-counts" }, cardCount, badgeCount);
   const root = el(
     "div",
     { className: "hud" },
@@ -46,13 +48,15 @@ export function createHud() {
     root.hidden = false;
     level.replaceChildren(el("small", {}, "Nv"), String(p.level));
     name.textContent = p.name;
-    // XP within the current level: level = 1 + xp // 100, xp_for_next_level = level * 100.
-    const floor = (p.level - 1) * 100;
-    const span = p.xp_for_next_level - floor;
-    const pct = span > 0 ? Math.min(100, ((p.xp - floor) / span) * 100) : 0;
+    // XP within the current level. The step comes from the server's xp_for_next_level
+    // (level * step), so the bar follows if the formula changes.
+    const step = p.xp_for_next_level / p.level;
+    const floor = p.xp_for_next_level - step;
+    const pct = step > 0 ? Math.min(100, Math.max(0, ((p.xp - floor) / step) * 100)) : 0;
     fill.style.width = `${pct}%`;
     xpText.textContent = `${p.xp}/${p.xp_for_next_level}`;
-    counts.textContent = `🃏 ${p.cards.length}   🏅 ${p.achievements.length}`;
+    cardCount.textContent = `🃏 ${p.cards.length}`;
+    badgeCount.textContent = `🏅 ${p.achievements.length}`;
   };
 
   return { root, render };

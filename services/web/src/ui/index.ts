@@ -27,7 +27,7 @@ export function startUi(root: HTMLElement): void {
 
   const renderHud = (p: Progress) => {
     // No notifications on the first load, only for what is gained while playing.
-    if (progress) notify(rewardEvents(progress, p));
+    if (progress?.player_id === p.player_id) notify(rewardEvents(progress, p));
     progress = p;
     hud.render(p);
   };

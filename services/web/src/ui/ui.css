@@ -99,8 +99,9 @@ body {
 }
 
 .hud-counts {
+  display: flex;
+  gap: 12px;
   font-size: 0.85em;
-  white-space: pre;
 }
 
 .panel {

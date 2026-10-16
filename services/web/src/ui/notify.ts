@@ -2,8 +2,14 @@
 import { el } from "./dom";
 import type { RewardEvent } from "./hud";
 
-const TOAST_MS = 4000;
-const BANNER_MS = 2500;
+/** Remove the element when its CSS fade-out ends; durations live in ui.css. */
+function onFadedOut(node: HTMLElement, then?: () => void): void {
+  node.addEventListener("animationend", (e) => {
+    if (e.animationName !== "fade-out") return;
+    node.remove();
+    then?.();
+  });
+}
 
 export function createNotifier(root: HTMLElement) {
   const toasts = el("div", { className: "toasts" });
@@ -20,17 +26,14 @@ export function createNotifier(root: HTMLElement) {
     }
     showingBanner = true;
     const banner = el("div", { className: "banner" }, text);
+    onFadedOut(banner, nextBanner);
     root.append(banner);
-    setTimeout(() => {
-      banner.remove();
-      nextBanner();
-    }, BANNER_MS);
   };
 
   const toast = (text: string) => {
     const t = el("div", { className: "toast" }, text);
+    onFadedOut(t);
     toasts.append(t);
-    setTimeout(() => t.remove(), TOAST_MS);
   };
 
   return (events: RewardEvent[]) => {

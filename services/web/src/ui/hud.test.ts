@@ -39,6 +39,11 @@ describe("rewardEvents", () => {
     ]);
   });
 
+  it("reports a level up on its own", () => {
+    const next: Progress = { ...start, xp: 100, level: 2, xp_for_next_level: 200 };
+    expect(rewardEvents(start, next)).toEqual([{ kind: "level", text: "⬆ Nivå 2!" }]);
+  });
+
   it("reports nothing when progress is unchanged", () => {
     expect(rewardEvents(start, { ...start })).toEqual([]);
   });
