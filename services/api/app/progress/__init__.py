@@ -1,35 +1,37 @@
 """Player progress: XP, levels, cards and achievements (package 4).
 
-Skeleton: in-memory store. Replace with Postgres (DATABASE_URL).
+Players are stored in Postgres (DATABASE_URL); tests swap in an in-memory store.
 """
 
 import uuid
-from dataclasses import dataclass, field
 
+from app.config import DATABASE_URL
 from app.models import Achievement, Card, Progress
+from app.progress.store import PlayerRecord, PlayerStore, SqlPlayerStore
 from app.world import get_achievement_defs, get_card
 
 XP_PER_LEVEL = 100
 
-
-@dataclass
-class _Player:
-    id: str
-    name: str
-    xp: int = 0
-    completed_quests: list[str] = field(default_factory=list)
-    card_ids: list[str] = field(default_factory=list)
-    achievement_ids: list[str] = field(default_factory=list)
+_store: PlayerStore | None = None
 
 
-_players: dict[str, _Player] = {}
+def get_store() -> PlayerStore:
+    global _store
+    if _store is None:
+        _store = SqlPlayerStore(DATABASE_URL)
+    return _store
+
+
+def set_store(store: PlayerStore | None) -> None:
+    global _store
+    _store = store
 
 
 def level_for(xp: int) -> int:
     return 1 + xp // XP_PER_LEVEL
 
 
-def _to_progress(p: _Player) -> Progress:
+def _to_progress(p: PlayerRecord) -> Progress:
     level = level_for(p.xp)
     achievements = {a.id: a for a in get_achievement_defs()}
     return Progress(
@@ -49,15 +51,16 @@ def _to_progress(p: _Player) -> Progress:
 
 
 def get_or_create_player(name: str) -> Progress:
-    player = next((p for p in _players.values() if p.name == name), None)
+    store = get_store()
+    player = store.get_by_name(name)
     if player is None:
-        player = _Player(id=str(uuid.uuid4()), name=name)
-        _players[player.id] = player
+        player = PlayerRecord(id=str(uuid.uuid4()), name=name)
+        store.save(player)
     return _to_progress(player)
 
 
 def get_progress(player_id: str) -> Progress | None:
-    player = _players.get(player_id)
+    player = get_store().get(player_id)
     return _to_progress(player) if player else None
 
 
@@ -65,7 +68,10 @@ def complete_quest(
     player_id: str, quest_id: str, xp: int, card_id: str
 ) -> tuple[int, Card | None, list[Achievement], Progress]:
     """Award a passed quest. Returns (xp_awarded, new_card, new_achievements, progress)."""
-    player = _players[player_id]
+    store = get_store()
+    player = store.get(player_id)
+    if player is None:
+        raise KeyError(f"Unknown player: {player_id}")
     if quest_id in player.completed_quests:
         return 0, None, [], _to_progress(player)
     player.xp += xp
@@ -79,4 +85,5 @@ def complete_quest(
             new_achievements.append(
                 Achievement(**a.model_dump(include=set(Achievement.model_fields)))
             )
+    store.save(player)
     return xp, get_card(card_id), new_achievements, _to_progress(player)
