@@ -1,0 +1,39 @@
+# Quests, one per mentor. criteria is server-side only (used by the judge). Owner: package 4.
+- id: q-ada-1
+  mentor_id: ada
+  title: Granska agentens kod
+  task: Förklara tre saker du alltid kollar när en kodagent har skrivit en ändring åt dig.
+  kind: explain
+  xp: 50
+  card_id: c-review-ai-code
+  criteria: >
+    Godkänt om svaret nämner minst två av: att tester täcker ändringen, att scope hålls
+    (inga orelaterade ändringar), följer projektets konventioner, säkerhet/hemligheter,
+    att man själv förstår koden.
+- id: q-karl-1
+  mentor_id: karl
+  title: Det överfulla kontextfönstret
+  task: >
+    Din agent börjar glömma instruktioner i långa sessioner. Förklara varför det händer
+    och föreslå två sätt att lösa det.
+  kind: solve
+  xp: 50
+  card_id: c-context-window
+  criteria: >
+    Godkänt om svaret förklarar att kontextfönstret är begränsat (äldre innehåll trängs
+    undan eller får mindre vikt) och föreslår minst ett rimligt sätt, t.ex.
+    sammanfattning/kompaktering, ny session, kortare kontext, instruktioner i en fil som
+    AGENTS.md, eller att dela upp uppgiften.
+- id: q-vera-1
+  mentor_id: vera
+  title: RAG eller inte RAG?
+  task: >
+    Ett team vill att en chattbot ska svara på frågor om deras interna wiki med 500 sidor.
+    Ett annat vill att den ska räkna ut kvartalets fakturering. Vilket passar RAG, och varför?
+  kind: choose
+  xp: 50
+  card_id: c-when-rag
+  criteria: >
+    Godkänt om svaret väljer wikin för RAG (hämta relevanta textstycken som kontext) och
+    förklarar att fakturering är beräkning/strukturerad data som passar bättre med
+    SQL eller verktygsanrop än RAG.

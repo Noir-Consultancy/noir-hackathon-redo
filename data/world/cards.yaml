@@ -1,0 +1,25 @@
+# Knowledge cards for the codex, one per quest. Owner: package 4.
+- id: c-review-ai-code
+  title: Granska AI-genererad kod
+  mentor_id: ada
+  summary: >
+    Läs agentens ändring som en kollegas PR: förstå den, kontrollera att testerna
+    täcker den och att den inte gör mer än du bad om.
+  when_to_use: Varje gång en agent har ändrat kod, innan du committar.
+  pitfalls: Att lita på att gröna tester räcker, eller att godkänna stora diffar du inte läst.
+- id: c-context-window
+  title: Kontextfönstret
+  mentor_id: karl
+  summary: >
+    Modellen ser bara en begränsad mängd tokens åt gången. Långa sessioner trängs ihop,
+    så viktiga instruktioner bör ligga i filer (t.ex. AGENTS.md) och sessioner hållas fokuserade.
+  when_to_use: När agenten "glömmer", upprepar sig eller blir sämre ju längre sessionen pågår.
+  pitfalls: Att klistra in allt "för säkerhets skull" – mer kontext är inte alltid bättre.
+- id: c-when-rag
+  title: När passar RAG?
+  mentor_id: vera
+  summary: >
+    RAG hämtar relevanta textstycken (via embeddings och vektorsök) och ger dem som
+    kontext till modellen. Bra för stora mängder ostrukturerad text.
+  when_to_use: Frågor mot dokumentation, wikis, policyer och annan fritext.
+  pitfalls: Att använda RAG för beräkningar eller exakt strukturerad data – där passar SQL eller verktyg bättre.

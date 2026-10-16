@@ -1,0 +1,16 @@
+# Zones on a 40x30 tile map (1 tile = 32 px). Owner: package 3.
+- id: agentbyn
+  name: Agentbyn
+  topic: Kodagenter i vardagen
+  bounds: { x: 0, y: 0, w: 20, h: 15 }
+  color: "#7fb069"
+- id: prompttornet
+  name: Prompttornet
+  topic: Prompt- och kontext-engineering
+  bounds: { x: 20, y: 0, w: 20, h: 15 }
+  color: "#8e7dbe"
+- id: rag-biblioteket
+  name: RAG-biblioteket
+  topic: Embeddings, vektorsök och RAG
+  bounds: { x: 0, y: 15, w: 40, h: 15 }
+  color: "#d4a373"

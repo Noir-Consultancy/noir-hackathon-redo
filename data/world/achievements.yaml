@@ -1,0 +1,18 @@
+# Achievements. rule is server-side only and evaluated by app/progress. Owner: package 4.
+# Rule types (proposal): quests_completed {count}, zone_completed {zone_id}, level_reached {level}
+- id: first-quest
+  title: Första questen!
+  description: Klara din första quest.
+  rule: { type: quests_completed, count: 1 }
+- id: agentbyns-hjalte
+  title: Agentbyns hjälte
+  description: Klara alla quests i Agentbyn.
+  rule: { type: zone_completed, zone_id: agentbyn }
+- id: level-2
+  title: Lärling
+  description: Nå nivå 2.
+  rule: { type: level_reached, level: 2 }
+- id: all-cards
+  title: Codex-samlaren
+  description: Samla alla kunskapskort.
+  rule: { type: quests_completed, count: 3 }
