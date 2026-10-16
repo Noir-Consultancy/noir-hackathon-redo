@@ -9,9 +9,9 @@ får riktiga figurer i samma stil som kartan.
   steg A → stilla → steg B → stilla i 8 fps. Står man still visas stillbilden i senaste
   riktningen. Kollisionskroppen är mindre än bilden och sitter vid fötterna, så att man
   går smidigt genom dörrar.
-- **Mentorer:** Kenney Tiny Dungeon (CC0) i `public/assets/tiny-dungeon/`. Ada =
-  gråhårig veteran, Kontext-Karl = trollkarl, Vera = lärd i kåpa; okända id:n får en
-  figur via hash. Andas lätt (±1 px) och vänder sig mot spelaren när hen är nära.
+- **Mentorer:** Kenney Tiny Dungeon (CC0) i `public/assets/tiny-dungeon/`. Ada (`ada`) =
+  gråhårig veteran, Kontext-Karl (`karl`) = trollkarl, Vera (`vera`) = lärd i kåpa,
+  Smeden Mo (`mo`, om han läggs till) = dvärg; okända id:n får en figur via hash. Andas lätt (±1 px) och vänder sig mot spelaren när hen är nära.
 - Logik som går att testa (riktning, bildrutor, val av figur) ligger i `src/game/sprites.ts`.
 
 ## Filer
