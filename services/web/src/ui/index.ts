@@ -1,27 +1,29 @@
 // UI overlay (owner: package 2): name prompt, HUD and a minimal dialog panel.
-import { chat, createPlayer, getProgress } from "../api/client";
-import type { Progress } from "../api/types";
+import { chat, createPlayer, getProgress, getWorld } from "../api/client";
+import type { Progress, World } from "../api/types";
 import { bus } from "../events";
+import { el } from "./dom";
+import { questBox } from "./quest";
 
 const PLAYER_KEY = "kunskapsriket.playerId";
-
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  props: Partial<HTMLElementTagNameMap[K]> = {},
-  ...children: (Node | string)[]
-): HTMLElementTagNameMap[K] {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-}
 
 export function startUi(root: HTMLElement): void {
   const hud = el("div", { className: "hud" });
   root.append(hud);
 
   let playerId = "";
+  let progress: Progress | null = null;
+  let world: Promise<World> | null = null;
+  const loadWorld = () => {
+    world ??= getWorld().catch((err) => {
+      world = null;
+      throw err;
+    });
+    return world;
+  };
 
   const renderHud = (p: Progress) => {
+    progress = p;
     hud.textContent = `${p.name} · Nivå ${p.level} · ${p.xp}/${p.xp_for_next_level} XP · Kort ${p.cards.length} · Badges ${p.achievements.length}`;
   };
 
@@ -60,13 +62,30 @@ export function startUi(root: HTMLElement): void {
     const input = el("input", { placeholder: "Fråga mentorn…" });
     const form = el("form", {}, input, el("button", { type: "submit" }, "Skicka"));
     const close = el("button", { type: "button", className: "close" }, "Stäng (Esc)");
-    const panel = el("div", { className: "panel dialog" }, close, log, form);
+    const questSlot = el("div", { className: "quest-slot" });
+    const panel = el("div", { className: "panel dialog" }, close, log, questSlot, form);
+
+    // Without world data the dialog still works, just without the quest box.
+    const world = await loadWorld().catch(() => null);
+    const isCompleted = (questId: string) => progress?.completed_quests.includes(questId) ?? false;
+
+    const showQuest = (questId: string) => {
+      if (questSlot.dataset.questId === questId) return;
+      const quest = world?.quests.find((q) => q.id === questId);
+      if (!quest) return;
+      questSlot.dataset.questId = questId;
+      questSlot.replaceChildren(questBox(quest, playerId, isCompleted(questId), renderHud));
+    };
+
+    // Already completed: show the mentor's quest as "Klarad ✓" right away.
+    const ownQuestId = world?.mentors.find((m) => m.id === npcId)?.quest_id;
+    if (ownQuestId && isCompleted(ownQuestId)) showQuest(ownQuestId);
 
     const say = async (message: string) => {
       if (message) log.append(el("p", { className: "me" }, message));
       const res = await chat(npcId, playerId, message);
       log.append(el("p", { className: "npc" }, res.reply));
-      // TODO(package 2): show the offered quest (res.offered_quest_id) and an answer form.
+      if (res.offered_quest_id) showQuest(res.offered_quest_id);
       log.scrollTop = log.scrollHeight;
     };
 
