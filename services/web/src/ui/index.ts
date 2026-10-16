@@ -136,6 +136,8 @@ export function startUi(root: HTMLElement): void {
     window.addEventListener("keydown", onKey);
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      // Enter still submits while the button is disabled: wait for the pending reply.
+      if (send.disabled) return;
       const message = input.value.trim();
       input.value = "";
       if (message) void say(message);
