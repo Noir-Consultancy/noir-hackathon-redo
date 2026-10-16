@@ -8,6 +8,7 @@ import { createNotifier } from "./notify";
 import { questBox } from "./quest";
 
 const PLAYER_KEY = "kunskapsriket.playerId";
+const SLOW_MS = 10_000;
 
 export function startUi(root: HTMLElement): void {
   const hud = createHud();
@@ -45,17 +46,24 @@ export function startUi(root: HTMLElement): void {
 
   const askName = () => {
     const input = el("input", { placeholder: "Ditt namn", maxLength: 40, required: true });
+    const error = el("p", { className: "error" });
     const form = el(
       "form",
       { className: "panel" },
       el("h2", {}, "Välkommen till Kunskapsriket"),
       input,
       el("button", { type: "submit" }, "Börja"),
+      error,
     );
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      ready(await createPlayer(input.value.trim()));
-      form.remove();
+      error.textContent = "";
+      try {
+        ready(await createPlayer(input.value.trim()));
+        form.remove();
+      } catch {
+        error.textContent = "Kunde inte nå servern. Försök igen om en stund.";
+      }
     });
     root.append(form);
     input.focus();
@@ -86,12 +94,36 @@ export function startUi(root: HTMLElement): void {
     const ownQuestId = world?.mentors.find((m) => m.id === npcId)?.quest_id;
     if (ownQuestId && isCompleted(ownQuestId)) showQuest(ownQuestId);
 
+    const mentorName = world?.mentors.find((m) => m.id === npcId)?.name ?? "Mentorn";
+    const send = form.querySelector("button") as HTMLButtonElement;
+
     const say = async (message: string) => {
       if (message) log.append(el("p", { className: "me" }, message));
-      const res = await chat(npcId, playerId, message);
-      log.append(el("p", { className: "npc" }, res.reply));
-      if (res.offered_quest_id) showQuest(res.offered_quest_id);
+      const thinking = el("p", { className: "npc thinking" }, `${mentorName} tänker`);
+      log.append(thinking);
       log.scrollTop = log.scrollHeight;
+      send.disabled = true;
+      // Local models can be slow: tell the player after a while that we are still waiting.
+      const slow = setTimeout(() => {
+        thinking.textContent = `${mentorName} tänker länge, vänta lite till`;
+      }, SLOW_MS);
+      try {
+        const res = await chat(npcId, playerId, message);
+        thinking.replaceWith(el("p", { className: "npc" }, res.reply));
+        if (res.offered_quest_id) showQuest(res.offered_quest_id);
+      } catch {
+        thinking.replaceWith(
+          el(
+            "p",
+            { className: "error" },
+            `${mentorName} kunde inte svara just nu. Försök igen om en stund.`,
+          ),
+        );
+      } finally {
+        clearTimeout(slow);
+        send.disabled = false;
+        log.scrollTop = log.scrollHeight;
+      }
     };
 
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && done();
