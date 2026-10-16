@@ -54,3 +54,43 @@ passar, fallgropar, vem som lärde ut det). Öppnas med `C`. Ej upplåsta kort v
 - Codex med AI-sammanfattning av vad du lärt dig
 - Fler zoner som genereras från ämnesbeskrivningar
 - Inventory/items, anpassad svårighetsgrad
+
+## Teknik
+| Komponent | Språk/ramverk | Ansvar |
+|---|---|---|
+| web | TypeScript, Vite, Phaser 3 (Node 24 LTS) | Spelet: karta, rörelse, NPC:er, dialogpanel, HUD, codex |
+| api | Python 3.13, FastAPI, LangGraph, `langchain-openai` (uv) | Moduler: `npc` (mentoragenter), `quests` (bedömning), `progress` (XP, nivåer, badges, codex), `world` (innehåll) |
+| postgres | PostgreSQL 18 | Spelarnas framsteg |
+
+Infrastruktur: Postgres. AI: LangGraph-agenter för mentorerna och LLM-bedömning av quests
+via OpenAI-kompatibelt API (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`). Standard är Ollama
+på datorn med `qwen3.6`; molnnyckel (t.ex. Gemini) går att byta till.
+
+Mentoragentens verktyg: `get_player_progress()`, `offer_quest()`, `lookup_card(topic)`.
+Minne under sessionen via LangGraphs checkpointer (en tråd per spelare och mentor).
+
+Önskemål: lära sig agenter med LangGraph. Inget tävlande och inga streaks.
+
+## Arkitektur
+```mermaid
+flowchart LR
+  web[web: Phaser-spel] -->|REST| api[api: FastAPI]
+  api --> npc[npc: LangGraph-agenter]
+  api --> quests[quests: bedömning]
+  api --> progress[progress: XP, badges, codex]
+  npc --> world[(data/world/*.yaml)]
+  quests --> world
+  progress --> db[(Postgres)]
+  npc -->|OpenAI-kompatibelt API| llm[LLM: Ollama]
+  quests -->|OpenAI-kompatibelt API| llm
+```
+
+Flöde: `E` vid en mentor → `POST /npcs/{id}/chat` → mentoragenten svarar (och kan erbjuda
+questen) → spelaren svarar → `POST /quests/{id}/attempt` → LLM bedömer → vid godkänt ger
+`progress` XP, kunskapskort och badges → HUD uppdateras.
+
+## Data
+Världsinnehållet ligger i `data/world/` som YAML: zoner, mentorer (persona, ämne,
+position), quests (uppdrag och bedömningskriterier), kunskapskort och achievement-regler.
+Det genereras för projektet; exempeldatan från mallen (CV:n, annonser) används inte.
+Spelarframsteg lagras i Postgres.
