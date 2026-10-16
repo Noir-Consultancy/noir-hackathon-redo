@@ -28,6 +28,6 @@ Använder `GET /world`, `POST /npcs/{id}/chat` (`offered_quest_id`),
 `POST /quests/{id}/attempt`. Inga ändringar.
 
 ## Test
-- Manuellt: gå till Ada, chatta tills questen erbjuds (stubben erbjuder direkt), svara
+- Manuellt: gå till Ada, chatta tills questen erbjuds (stubben erbjuder den efter första meddelandet), svara
   kort (< 5 ord, underkänt) och sedan längre (godkänt). Öppna dialogen igen → "Klarad ✓".
 - Kvalitetsgrindar: `npm test && npm run lint && npm run build`.
