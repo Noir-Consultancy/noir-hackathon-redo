@@ -46,7 +46,7 @@ def test_offer_quest_tool_sets_offered_quest_id_only_that_turn():
     pid = _player("offer")
     reply = npc.chat(ada, pid, "Har du en quest?")
     assert reply.offered_quest_id == "q-ada-1"
-    assert get_quest("q-ada-1").task in reply.reply
+    assert reply.reply == 'Då har jag en utmaning åt dig: "Granska agentens kod". Lycka till!'
     assert npc.chat(ada, pid, "Tack").offered_quest_id is None
 
 
@@ -55,7 +55,8 @@ def test_offer_quest_when_already_done():
     _complete(pid, "q-ada-1")
     content, artifact = offer_quest.func(_config(pid))
     assert artifact is None and "redan klarat" in content
-    assert npc.chat(get_mentor("ada"), pid, "Har du en quest?").offered_quest_id is None
+    reply = npc.chat(get_mentor("ada"), pid, "Har du en quest?")
+    assert reply.offered_quest_id is None and "redan klarat" in reply.reply
 
 
 def test_fallback_offers_quest_once_after_three_messages():
