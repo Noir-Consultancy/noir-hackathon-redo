@@ -82,7 +82,10 @@ export class WorldScene extends Phaser.Scene {
     keyboard.enabled = active;
     if (active) keyboard.addCapture("UP,DOWN,LEFT,RIGHT,SPACE");
     else keyboard.clearCaptures();
-    if (!active) this.body?.setVelocity(0, 0);
+    if (!active && this.body) {
+      this.body.setVelocity(0, 0);
+      this.animatePlayer(0, 0);
+    }
   }
 
   private drawWorld(world: World): void {
@@ -100,7 +103,7 @@ export class WorldScene extends Phaser.Scene {
           stroke: "#000",
           strokeThickness: 4,
         })
-        .setDepth(1);
+        .setDepth(2);
     }
 
     const mentorBodies = this.physics.add.staticGroup();
@@ -127,7 +130,7 @@ export class WorldScene extends Phaser.Scene {
           strokeThickness: 3,
         })
         .setOrigin(0.5)
-        .setDepth(1);
+        .setDepth(2);
       this.mentors.push({ id: m.id, pos, sprite });
     }
 
@@ -162,10 +165,18 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** Walk animation while moving, the idle frame of the last direction when still. */
-  private animatePlayer(vx: number, vy: number): void {
+  /** False when every pressed direction is blocked by a wall or a mentor (last physics step). */
+  private isMovingFreely(vx: number, vy: number): boolean {
+    const { blocked: b, touching: t } = this.body;
+    const freeX = (vx < 0 && !b.left && !t.left) || (vx > 0 && !b.right && !t.right);
+    const freeY = (vy < 0 && !b.up && !t.up) || (vy > 0 && !b.down && !t.down);
+    return freeX || freeY;
+  }
+
+  /** Walk animation while moving, the idle frame of the facing direction otherwise. */
+  private animatePlayer(vx: number, vy: number, moving = vx !== 0 || vy !== 0): void {
     this.facing = directionFor(vx, vy, this.facing);
-    if (vx !== 0 || vy !== 0) this.player.anims.play(`walk-${this.facing}`, true);
+    if (moving) this.player.anims.play(`walk-${this.facing}`, true);
     else {
       this.player.anims.stop();
       this.player.setFrame(playerFrames(this.facing).idle);
@@ -219,14 +230,11 @@ export class WorldScene extends Phaser.Scene {
     if (mentor) this.hint.setPosition(mentor.pos.x, mentor.pos.y + TILE);
 
     this.faceMentorsTowardsPlayer();
-    if (!this.active) {
-      this.animatePlayer(0, 0);
-      return;
-    }
+    if (!this.active) return;
     const { left, right, up, down } = this.cursors;
     const vx = (right.isDown ? 1 : 0) - (left.isDown ? 1 : 0);
     const vy = (down.isDown ? 1 : 0) - (up.isDown ? 1 : 0);
     this.body.setVelocity(vx * SPEED, vy * SPEED);
-    this.animatePlayer(vx, vy);
+    this.animatePlayer(vx, vy, this.isMovingFreely(vx, vy));
   }
 }
