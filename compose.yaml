@@ -27,7 +27,7 @@ services:
       postgres:
         condition: service_healthy
 
-  # PostgreSQL 18 with pgvector (from starter/compose/postgres.yaml).
+  # PostgreSQL 18 with pgvector.
   postgres:
     image: docker.io/pgvector/pgvector:pg18
     ports:

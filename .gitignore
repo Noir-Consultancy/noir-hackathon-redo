@@ -1,6 +1,3 @@
-# --- Organizer planning notes (local only, not versioned for now) ---
-.claude/plans/
-
 # --- Claude Code: personal/local settings ---
 .claude/settings.local.json
 CLAUDE.local.md
@@ -34,10 +31,3 @@ build/
 
 # --- Node ---
 node_modules/
-
-# --- Terraform ---
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfvars
-!*.tfvars.example

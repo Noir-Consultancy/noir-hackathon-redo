@@ -4,23 +4,12 @@ Instructions for coding agents (Claude Code, Codex, etc.) working in this reposi
 
 ## Context
 
-This repository is a template for team projects built during the hackathon at NOIR's autumn
-conference 2026.
-Teams of 2–4 people build a small project, usually themed around competence development,
-in about two hours of development time, using coding agents throughout.
+This repository is Kunskapsriket, a team project built by four people during the
+hackathon at NOIR's autumn conference 2026, in about two hours of development time,
+using coding agents throughout. See the Project section below.
 
-- Conference material (Swedish) lives in `konferens/`. Read it for context; do not modify it
-  in team repos.
-- Reusable infrastructure snippets live in `starter/compose/` and synthetic example data
-  (consultant profiles, requests, job ads, skill taxonomy) in `starter/data/`.
-- If the "Project" section below is still empty, suggest running the `kickoff` skill
-  (`.agents/skills/kickoff/SKILL.md`) before writing any code. It is recommended but
-  optional. If the team prefers to plan without it, help them write down at least
-  `docs/plan.md` with a team table (names, GitHub handles, ownership) and the Project
-  section below, plus a contract in `docs/contract/` if they want one, since the other
-  skills and agents rely on them. Then offer to remove the template material, using
-  kickoff step 8 as a checklist that also removes the kickoff skill, and only after the
-  team says yes.
+- Conference material (Swedish) lives in `konferens/`. Read it for context; do not modify it.
+- World content (zones, mentors, quests, cards, achievements) lives in `data/world/`.
 
 ## Team rules
 
@@ -81,9 +70,7 @@ adding it.
 ### Git
 
 - Branch per task: `<name>/<short-topic>`, e.g. `anna/quiz-api`.
-- Exception: the initial skeleton (from kickoff or planned without it) is committed and
-  pushed directly to `main`, so everyone can branch from it right away. All later work
-  goes through branches and PRs.
+- All work goes through branches and PRs.
 - **Ask before pushing.** Commit locally as you go, but never run `git push` (or merge a
   PR) without the user's explicit ok in the current conversation. Say which branch it
   goes to. This applies especially to pushes to `main`.
@@ -166,7 +153,6 @@ like this, before any planning or code. The user leads; skip anything they wave 
 ## Skills and agents
 
 These are examples. The team may change them or add new ones for recurring tasks.
-- `kickoff` skill (`.agents/skills/kickoff/`): project setup.
 - `create-pr` skill (`.agents/skills/create-pr/`): small PR with teammates as reviewers.
 - `code-reviewer` subagent (`.claude/agents/`, `.codex/agents/`): reviews the current
   branch before a PR is opened, or a teammate's PR by number, and runs the quality gates

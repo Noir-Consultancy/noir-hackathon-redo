@@ -64,7 +64,7 @@ kräver ok från de berörda paketägarna.
   questen, se XP, kort och badge i HUD och codex.
 
 ## Kända problem
-- LLM-anropen är inte verifierade vid kickoff (Ollama körde inte). Alla behöver en
+- LLM-anropen är inte verifierade när skelettet sattes upp (Ollama körde inte). Alla behöver en
   lokal modell med tool calling eller en molnnyckel, se `.env.example`. – Robert, Daniel
 - `LLM_BASE_URL_CONTAINER` är satt för Docker. Podman-användare byter till
   `http://host.containers.internal:11434/v1` i sin `.env`.
