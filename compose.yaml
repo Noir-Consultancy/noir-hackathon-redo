@@ -1,0 +1,49 @@
+# Kunskapsriket. Works with both Podman and Docker:
+#   podman compose up -d --build    (or docker compose …)
+# The LLM (Ollama) runs natively on the host, not in a container.
+
+services:
+  web:
+    build: ./services/web
+    ports:
+      - "8000:8000"
+    depends_on:
+      - api
+
+  api:
+    build: ./services/api
+    env_file: .env
+    environment: # container-internal addresses override .env
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/${POSTGRES_DB:-app}
+      LLM_BASE_URL: ${LLM_BASE_URL_CONTAINER:-http://host.containers.internal:11434/v1}
+      WORLD_DIR: /data/world
+    volumes:
+      - ./data:/data:ro,Z
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # lets Docker on Linux reach host Ollama
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # PostgreSQL 18 with pgvector (from starter/compose/postgres.yaml).
+  postgres:
+    image: docker.io/pgvector/pgvector:pg18
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    volumes:
+      # Postgres 18 images store data under /var/lib/postgresql/<version>/.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
