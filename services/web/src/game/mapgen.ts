@@ -26,13 +26,17 @@ function noise(x: number, y: number, salt = 0): number {
 const near = (a: Point, b: Point, d: number) =>
   Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <= d;
 
+/** Index of the zone containing tile (x, y), or -1. */
+export function zoneIndexAt(zones: Zone[], x: number, y: number): number {
+  return zones.findIndex(({ bounds: b }) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
+}
+
 export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
   if (zones.length === 0) throw new Error("buildMap: the world has no zones");
   const width = Math.max(...zones.map((z) => z.bounds.x + z.bounds.w));
   const height = Math.max(...zones.map((z) => z.bounds.y + z.bounds.h));
 
-  const zoneAt = (x: number, y: number): number =>
-    zones.findIndex(({ bounds: b }) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
+  const zoneAt = (x: number, y: number) => zoneIndexAt(zones, x, y);
   const grid = <T>(fill: (x: number, y: number) => T): T[][] =>
     Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => fill(x, y)));
 

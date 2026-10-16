@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Mentor, Zone } from "../api/types";
-import { buildMap, reachable } from "./mapgen";
+import { buildMap, reachable, zoneIndexAt } from "./mapgen";
 import { EMPTY, WALL } from "./tiles";
 
 // Same layout as data/world/zones.yaml and mentors.yaml.
@@ -24,6 +24,14 @@ const mentor = (id: string, x: number, y: number): Mentor => ({
 const zones = [zone("a", 0, 0, 20, 15), zone("b", 20, 0, 20, 15), zone("c", 0, 15, 40, 15)];
 const mentors = [mentor("ada", 8, 6), mentor("karl", 30, 5), mentor("vera", 12, 22)];
 const map = buildMap(zones, mentors);
+
+describe("zoneIndexAt", () => {
+  it("finds the zone containing a tile", () => {
+    expect(zoneIndexAt(zones, 25, 3)).toBe(1);
+    expect(zoneIndexAt(zones, 5, 20)).toBe(2);
+    expect(zoneIndexAt(zones, 99, 99)).toBe(-1);
+  });
+});
 
 describe("buildMap", () => {
   it("sizes the map from the zones", () => {

@@ -4,6 +4,7 @@
  */
 export class UiState {
   private ready = false;
+  private id = "";
   private modalOpen = false;
   private listener?: () => void;
 
@@ -12,8 +13,14 @@ export class UiState {
     return this.ready && !this.modalOpen;
   }
 
-  playerReady(): void {
+  /** The player's id once ready, otherwise "". */
+  get playerId(): string {
+    return this.id;
+  }
+
+  playerReady(playerId: string): void {
     this.ready = true;
+    this.id = playerId;
     this.listener?.();
   }
 
