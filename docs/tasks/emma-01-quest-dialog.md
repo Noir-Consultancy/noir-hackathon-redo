@@ -21,7 +21,9 @@ och försöka igen – direkt i dialogen, utan att tappa chatten.
 ## Filer
 - `services/web/src/ui/index.ts` – questruta, attempt-flöde, spara senaste `Progress`.
 - `services/web/src/ui/ui.css` – stil för questrutan.
-- Eventuellt `services/web/src/ui/quest.ts` om index.ts blir för stor.
+- `services/web/src/ui/quest.ts` – questrutan (`questBox`, `rewardLine`).
+- `services/web/src/ui/quest.test.ts` – test för `rewardLine`.
+- `services/web/src/ui/dom.ts` – hjälpfunktionen `el`, utflyttad ur index.ts.
 
 ## Kontrakt
 Använder `GET /world`, `POST /npcs/{id}/chat` (`offered_quest_id`),

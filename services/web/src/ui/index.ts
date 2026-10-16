@@ -65,28 +65,27 @@ export function startUi(root: HTMLElement): void {
     const questSlot = el("div", { className: "quest-slot" });
     const panel = el("div", { className: "panel dialog" }, close, log, questSlot, form);
 
-    const showQuest = async (questId: string) => {
+    // Without world data the dialog still works, just without the quest box.
+    const world = await loadWorld().catch(() => null);
+    const isCompleted = (questId: string) => progress?.completed_quests.includes(questId) ?? false;
+
+    const showQuest = (questId: string) => {
       if (questSlot.dataset.questId === questId) return;
-      const quest = (await loadWorld()).quests.find((q) => q.id === questId);
+      const quest = world?.quests.find((q) => q.id === questId);
       if (!quest) return;
       questSlot.dataset.questId = questId;
-      const completed = progress?.completed_quests.includes(questId) ?? false;
-      questSlot.replaceChildren(questBox(quest, playerId, completed, renderHud));
+      questSlot.replaceChildren(questBox(quest, playerId, isCompleted(questId), renderHud));
     };
 
     // Already completed: show the mentor's quest as "Klarad ✓" right away.
-    void loadWorld()
-      .then((w) => {
-        const questId = w.mentors.find((m) => m.id === npcId)?.quest_id;
-        if (questId && progress?.completed_quests.includes(questId)) return showQuest(questId);
-      })
-      .catch(() => undefined);
+    const ownQuestId = world?.mentors.find((m) => m.id === npcId)?.quest_id;
+    if (ownQuestId && isCompleted(ownQuestId)) showQuest(ownQuestId);
 
     const say = async (message: string) => {
       if (message) log.append(el("p", { className: "me" }, message));
       const res = await chat(npcId, playerId, message);
       log.append(el("p", { className: "npc" }, res.reply));
-      if (res.offered_quest_id) await showQuest(res.offered_quest_id).catch(() => undefined);
+      if (res.offered_quest_id) showQuest(res.offered_quest_id);
       log.scrollTop = log.scrollHeight;
     };
 

@@ -47,22 +47,24 @@ export function questBox(
     submit.disabled = true;
     feedback.className = "quest-feedback";
     feedback.textContent = "Bedömer ditt svar…";
+    let result: AttemptResult;
     try {
-      const result = await attemptQuest(quest.id, playerId, text);
-      feedback.textContent = result.feedback;
-      feedback.classList.add(result.passed ? "passed" : "failed");
-      if (result.passed) {
-        markCompleted();
-        const line = rewardLine(result);
-        if (line) box.append(el("p", { className: "quest-reward" }, line));
-      }
-      onProgress(result.progress);
+      result = await attemptQuest(quest.id, playerId, text);
     } catch {
       feedback.textContent = "Kunde inte skicka svaret. Försök igen.";
       feedback.classList.add("failed");
+      return;
     } finally {
       submit.disabled = false;
     }
+    feedback.textContent = result.feedback;
+    feedback.classList.add(result.passed ? "passed" : "failed");
+    if (result.passed) {
+      markCompleted();
+      const line = rewardLine(result);
+      if (line) box.append(el("p", { className: "quest-reward" }, line));
+    }
+    onProgress(result.progress);
   });
 
   return box;
