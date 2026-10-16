@@ -177,6 +177,45 @@ These are examples. The team may change them or add new ones for recurring tasks
 
 ## Project
 
-<!-- Filled in by the kickoff skill: idea, MVP, stack, components, how to run, team ownership. -->
+**Kunskapsriket** – an exploratory 2D RPG where senior developers learn AI concepts and
+modern ways of working by talking to AI mentor agents, completing quests and collecting
+knowledge cards. Spec: `docs/spec.md` · Plan and ownership: `docs/plan.md` · Contract:
+`docs/contract/` · Tasks: GitHub issues #1–#13.
 
-_Not set up yet. Run the kickoff skill._
+### Team
+| Name | GitHub | Owns |
+|---|---|---|
+| Oskar | @skrlssn | 1. Game world: `services/web/src/game/` |
+| Emma | @emra | 2. UI and HUD: `services/web/src/ui/`, `services/web/src/api/` |
+| Robert | @robertocus | 3. Mentor agents: `services/api/app/npc/`, `services/api/app/world/`, `data/world/zones.yaml`, `data/world/mentors.yaml` |
+| Daniel | @DMillevik | 4. Quests and progression: `services/api/app/quests/`, `services/api/app/progress/`, `data/world/quests.yaml`, `cards.yaml`, `achievements.yaml` |
+
+### Components
+| Service | Path | Stack | Port |
+|---|---|---|---|
+| web | services/web | TypeScript, Vite, Phaser 3 (nginx in compose, proxies `/api` → api) | 8000 |
+| api | services/api | Python 3.13, FastAPI, LangGraph, langchain-openai | 8001 |
+| postgres | (image) | PostgreSQL 18 (pgvector image) | 5432 |
+
+### Setup
+Tools and versions every member needs: Python 3.13 via uv, Node 24 LTS, Docker or Podman
+with compose, and an LLM: Ollama on the host with a chat model that supports tool
+calling (`ollama pull <model>`, set `LLM_MODEL`), or a cloud key (see `.env.example`).
+Versions are pinned in `services/api/.python-version` and `services/web/.nvmrc`. Then
+`cp .env.example .env` (Podman users: set `LLM_BASE_URL_CONTAINER` to
+`http://host.containers.internal:11434/v1`).
+
+### Commands
+- Start everything: `docker compose up -d --build` (or `podman compose …`), open http://localhost:8000
+- Stop everything: `docker compose down` (or `podman compose …`)
+- Run a service locally: see `services/<name>/README.md` (api: `uv run uvicorn app.main:app --reload --port 8001`, web: `npm run dev`)
+- Quality gates (run before committing):
+  - api: `cd services/api && uv run pytest && uv run ruff check && uv run ruff format --check`
+  - web: `cd services/web && npm test && npm run lint && npm run build`
+
+### Conventions
+- JSON fields in `snake_case`; content ids are slugs (`ada`, `q-ada-1`), player ids UUIDs.
+- World content lives in `data/world/*.yaml`; server-only fields (`persona`, `criteria`,
+  `rule`) are never sent to the client.
+- Game and UI talk only via the bus in `services/web/src/events.ts`.
+- User-facing text (game, mentors) in Swedish.
