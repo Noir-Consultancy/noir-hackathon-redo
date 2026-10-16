@@ -56,6 +56,21 @@ describe("buildMap", () => {
     }
   });
 
+  it("reaches every door, so every zone is reachable", () => {
+    for (const d of map.doors) expect(reachable(map.walls, map.spawn, d)).toBe(true);
+  });
+
+  it("moves spawn off a mentor standing in the zone centre", () => {
+    const m = buildMap(zones, [mentor("centre", 10, 7)]);
+    expect(m.spawn).not.toEqual({ x: 10, y: 7 });
+    expect(m.walls[m.spawn.y][m.spawn.x]).toBe(EMPTY);
+  });
+
+  it("skips mentors outside the map and rejects a world without zones", () => {
+    expect(() => buildMap(zones, [mentor("lost", 99, 99)])).not.toThrow();
+    expect(() => buildMap([], [])).toThrow();
+  });
+
   it("places some obstacles", () => {
     const obstacles = map.walls.flat().filter((t) => t !== EMPTY && t !== WALL);
     expect(obstacles.length).toBeGreaterThan(10);

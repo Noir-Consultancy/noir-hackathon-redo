@@ -27,6 +27,7 @@ const near = (a: Point, b: Point, d: number) =>
   Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <= d;
 
 export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
+  if (zones.length === 0) throw new Error("buildMap: the world has no zones");
   const width = Math.max(...zones.map((z) => z.bounds.x + z.bounds.w));
   const height = Math.max(...zones.map((z) => z.bounds.y + z.bounds.h));
 
@@ -75,13 +76,12 @@ export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
     }
   }
 
-  const mentorCells = mentors.map((m) => m.position);
+  // Mentors outside the walkable area are skipped rather than crashing the map.
+  const inside = (p: Point) => p.x > 0 && p.y > 0 && p.x < width - 1 && p.y < height - 1;
+  const mentorCells = mentors.map((m) => m.position).filter(inside);
   for (const m of mentorCells) walls[m.y][m.x] = EMPTY;
 
-  const first = zones[0].bounds;
-  const spawn = { x: first.x + Math.floor(first.w / 2), y: first.y + Math.floor(first.h / 2) };
-  while (mentorCells.some((m) => m.x === spawn.x && m.y === spawn.y)) spawn.y += 1;
-  walls[spawn.y][spawn.x] = EMPTY;
+  const spawn = findSpawn(zones[0], walls, mentorCells);
 
   // Obstacles, kept clear of everything the player must reach.
   const keepClear = [...mentorCells, ...doors, spawn];
@@ -95,12 +95,32 @@ export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
       placed.push({ x, y });
     }
   }
-  // Safety net if world content changes: never let obstacles cut off a mentor.
-  if (!mentorCells.every((m) => reachable(walls, spawn, m))) {
+  // Safety net if world content changes: never let obstacles cut off a mentor or a zone.
+  if (![...mentorCells, ...doors].every((p) => reachable(walls, spawn, p))) {
     for (const p of placed) walls[p.y][p.x] = EMPTY;
   }
 
   return { width, height, ground, walls, spawn, doors };
+}
+
+/** The free cell in the zone closest to its centre, not on a wall or a mentor. */
+function findSpawn(zone: Zone, walls: number[][], mentorCells: Point[]): Point {
+  const b = zone.bounds;
+  const centre = { x: b.x + Math.floor(b.w / 2), y: b.y + Math.floor(b.h / 2) };
+  let best: Point | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (let y = b.y; y < b.y + b.h; y++) {
+    for (let x = b.x; x < b.x + b.w; x++) {
+      if (walls[y]?.[x] !== EMPTY || mentorCells.some((m) => m.x === x && m.y === y)) continue;
+      const d = Math.abs(x - centre.x) + Math.abs(y - centre.y);
+      if (d < bestDist) {
+        best = { x, y };
+        bestDist = d;
+      }
+    }
+  }
+  if (!best) throw new Error(`buildMap: no free cell for spawn in zone ${zone.id}`);
+  return best;
 }
 
 /** Whether `to` can be reached from `from` through EMPTY cells (4-way). */

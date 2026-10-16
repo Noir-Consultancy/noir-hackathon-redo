@@ -35,8 +35,20 @@ export class WorldScene extends Phaser.Scene {
     bus.on("ui:modal-open", () => this.setActive(false));
     bus.on("ui:modal-close", () => this.setActive(true));
 
-    const world = await getWorld();
-    this.drawWorld(world);
+    try {
+      this.drawWorld(await getWorld());
+    } catch (err) {
+      console.error("Could not load the world", err);
+      const { width, height } = this.scale;
+      this.add
+        .text(width / 2, height / 2, "Kunde inte ladda världen.\nKör api:t och ladda om sidan.", {
+          fontSize: "20px",
+          color: "#fff",
+          align: "center",
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0);
+    }
   }
 
   private setActive(active: boolean): void {
