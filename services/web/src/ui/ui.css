@@ -215,7 +215,7 @@ body {
   border-radius: 6px;
   animation:
     toast-in 0.3s ease-out,
-    fade-out 0.4s ease-in 3.6s forwards;
+    fade-out 0.4s ease-in 6.6s forwards;
 }
 
 .banner {

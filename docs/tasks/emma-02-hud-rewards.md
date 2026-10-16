@@ -9,7 +9,7 @@ achievement eller går upp en nivå.
   mot `xp_for_next_level` med "50/100" och räknare 🃏 (kort) och 🏅 (badges). XP-baren
   animeras med en CSS-transition.
 - **Notiser (alternativ 3):**
-  - Nytt kort och ny achievement: toasts uppe till höger som försvinner efter ~4 s och
+  - Nytt kort och ny achievement: toasts uppe till höger som försvinner efter ~7 s och
     staplas.
   - Level up: banner mitt upptill, en i taget.
 - Notiserna kommer från en jämförelse mellan föregående och ny `Progress`
