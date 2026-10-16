@@ -78,3 +78,59 @@ body {
 .close {
   align-self: flex-end;
 }
+
+.quest-slot:empty {
+  display: none;
+}
+
+.quest {
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(242, 233, 78, 0.06);
+}
+
+.quest h3,
+.quest p {
+  margin: 4px 0;
+}
+
+.quest-status,
+.quest-xp {
+  color: var(--accent);
+  font-size: 0.9em;
+}
+
+.quest.done {
+  border-color: #7fb069;
+}
+
+.quest.done .quest-status {
+  color: #7fb069;
+}
+
+.dialog .quest-form {
+  flex-direction: column;
+}
+
+.quest textarea {
+  font: inherit;
+  resize: vertical;
+}
+
+.quest-feedback:empty {
+  display: none;
+}
+
+.quest-feedback.passed {
+  color: #7fb069;
+}
+
+.quest-feedback.failed {
+  color: #f28b82;
+}
+
+.quest-reward {
+  font-weight: bold;
+  color: var(--accent);
+}
