@@ -1,0 +1,43 @@
+# --- Organizer planning notes (local only, not versioned for now) ---
+.claude/plans/
+
+# --- Claude Code: personal/local settings ---
+.claude/settings.local.json
+CLAUDE.local.md
+AGENTS.local.md
+
+# --- Secrets & environment ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# --- Node ---
+node_modules/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example

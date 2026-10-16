@@ -1,0 +1,17 @@
+Senior backendutvecklare, Java/Kotlin – realtidsbetalningar
+
+Vår kund, en svensk bank, bygger om sina betalningsflöden så att betalningar hanteras i
+realtid i stället för i nattliga körningar. Teamet består av sex utvecklare, en
+produktägare och en arkitekt, och behöver förstärkas med en erfaren backendutvecklare
+som också kan stötta de mindre erfarna i teamet.
+
+Om uppdraget
+Stockholm, hybrid med två dagar i veckan på plats. Start i december, 6 månader med
+option på förlängning.
+
+Krav
+Java 17 eller senare, Spring Boot och Kafka. Erfarenhet av bank, finans eller
+betalningar.
+
+Meriterande
+Kotlin, Kubernetes och erfarenhet som tech lead eller mentor.

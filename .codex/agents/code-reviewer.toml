@@ -1,0 +1,11 @@
+# Codex counterpart of .claude/agents/code-reviewer.md – that file holds the instructions,
+# so both agents share one source of truth.
+name = "code_reviewer"
+description = "Reviews the current branch's changes, or a teammate's pull request by number, for correctness, consistency and conventional engineering practices, and flags deviations from the team's spec, plan and contract. Returns all findings as blockers and nits, each with location and suggested solutions."
+sandbox_mode = "read-only"
+developer_instructions = """
+Read .claude/agents/code-reviewer.md (ignore its YAML frontmatter) and follow its scope,
+checklist and report format. You run read-only, so don't run the quality gates or
+`git fetch`. Review from `git diff` or `gh pr diff`, and say in the report that the
+gates were skipped.
+"""

@@ -1,0 +1,18 @@
+Azure AI-utvecklare – intern kunskapsassistent
+Region i södra Sverige. Start i januari, 6 månader med möjlig förlängning. Mest distans.
+
+Uppdraget
+- Bygga en assistent som svarar på medarbetarnas frågor utifrån interna riktlinjer och rutiner
+- Ta fram en RAG-lösning med Azure OpenAI och Azure AI Search
+- Inloggning med Entra ID och behörighetsstyrning per dokument
+- Koppla assistenten till befintliga flöden i Power Automate
+
+Vi söker dig som har
+- Erfarenhet av C# och .NET
+- Erfarenhet av Azure, gärna Azure Functions
+- Arbetat med generativ AI eller RAG
+- Vana av offentlig sektor och dess krav på säkerhet och tillgänglighet
+
+Plus om du har
+- Byggt agenter eller verktygsanrop mot språkmodeller
+- Erfarenhet av Copilot Studio

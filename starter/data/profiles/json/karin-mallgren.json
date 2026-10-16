@@ -1,0 +1,149 @@
+{
+  "user": {"fullName": "Karin Mallgren", "email": "karin.mallgren@example.com", "role": "consultant"},
+  "title": {"sv": "Lösningsarkitekt inom .NET och Azure", "en": ".NET and Azure Solution Architect"},
+  "tagline": {
+    "sv": "Designar säkra och hållbara integrationslösningar för offentlig sektor",
+    "en": "Designs secure and sustainable integration solutions for the public sector"
+  },
+  "bio": {
+    "sv": "Karin har 20 års erfarenhet av systemutveckling i .NET, varav de senaste tio som arkitekt. Hon har lett flera stora moderniseringar i offentlig sektor och är van att förklara tekniska vägval för både verksamhet och ledning. Hon vill nu förstå hur AI-agenter kan användas i e-tjänster och lära sig Terraform.",
+    "en": "Karin has 20 years of experience in .NET development, the last ten as an architect. She has led several large modernisations in the public sector and is used to explaining technical choices to both the business and management. She now wants to understand how AI agents can be used in e-services and to learn Terraform."
+  },
+  "linkedinUrl": null,
+  "highlights": [
+    {"label": {"sv": "Erfarenhet", "en": "Experience"}, "value": {"sv": "20 år", "en": "20 years"}},
+    {
+      "label": {"sv": "Fokus", "en": "Focus"},
+      "value": {"sv": "Arkitektur och integration", "en": "Architecture and integration"}
+    }
+  ],
+  "skills": [
+    {"name": "C#", "category": "Technical"},
+    {"name": "SQL Server", "category": "Technical"},
+    {"name": ".NET", "category": "Tools"},
+    {"name": ".NET 8", "category": "Tools"},
+    {"name": ".NET Framework", "category": "Tools"},
+    {"name": "ASP.NET Core", "category": "Tools"},
+    {"name": "Entity Framework Core", "category": "Tools"},
+    {"name": "Azure", "category": "Tools"},
+    {"name": "Azure Functions", "category": "Tools"},
+    {"name": "Azure Service Bus", "category": "Tools"},
+    {"name": "Azure DevOps", "category": "Tools"},
+    {"name": "Bicep", "category": "Tools"},
+    {"name": "REST", "category": "Tools"},
+    {"name": "DDD", "category": "Domain"},
+    {"name": "Clean Architecture", "category": "Domain"},
+    {"name": "Software Architecture", "category": "Domain"},
+    {"name": "Ledarskap", "category": "Soft"},
+    {"name": "Presentationsteknik", "category": "Soft"}
+  ],
+  "experiences": [
+    {
+      "clientName": "Region Fjällmark",
+      "description": {
+        "sv": "Integrationsplattform som kopplar ihop regionens e-tjänster med vårdens och ekonomins system.",
+        "en": "Integration platform connecting the region's e-services with healthcare and finance systems."
+      },
+      "startDate": "2020-09-01",
+      "endDate": null,
+      "roles": [
+        {
+          "title": {"sv": "Lösningsarkitekt", "en": "Solution Architect"},
+          "description": {
+            "sv": "Ansvarar för målarkitekturen och leder tre utvecklingsteam i införandet av Azure.",
+            "en": "Owns the target architecture and leads three development teams in the move to Azure."
+          }
+        }
+      ],
+      "skills": [
+        "C#",
+        ".NET 8",
+        "ASP.NET Core",
+        "Azure",
+        "Azure Functions",
+        "Azure Service Bus",
+        "Bicep",
+        "Software Architecture",
+        "Ledarskap",
+        "Presentationsteknik"
+      ]
+    },
+    {
+      "clientName": "Statens Exempelverk",
+      "description": {
+        "sv": "Nytt ärendehanteringssystem som ersatte flera äldre system.",
+        "en": "New case management system replacing several legacy systems."
+      },
+      "startDate": "2013-01-01",
+      "endDate": "2020-08-31",
+      "roles": [
+        {
+          "title": {"sv": "Senior utvecklare", "en": "Senior Developer"},
+          "description": {
+            "sv": "Utvecklade kärndomänen i C# med DDD och Entity Framework.",
+            "en": "Developed the core domain in C# using DDD and Entity Framework."
+          }
+        },
+        {
+          "title": {"sv": "Systemarkitekt", "en": "System Architect"},
+          "description": {
+            "sv": "Införde Clean Architecture och en gemensam pipeline i Azure DevOps.",
+            "en": "Introduced Clean Architecture and a shared pipeline in Azure DevOps."
+          }
+        }
+      ],
+      "skills": [
+        "C#",
+        ".NET",
+        "Entity Framework Core",
+        "SQL Server",
+        "Azure DevOps",
+        "REST",
+        "DDD",
+        "Clean Architecture"
+      ]
+    },
+    {
+      "clientName": "Nordljus Energi AB",
+      "description": {
+        "sv": "Interna system för fakturering och kundservice.",
+        "en": "Internal systems for billing and customer service."
+      },
+      "startDate": "2006-02-01",
+      "endDate": "2012-12-31",
+      "roles": [
+        {
+          "title": {"sv": ".NET-utvecklare", "en": ".NET Developer"},
+          "description": {
+            "sv": "Vidareutvecklade faktureringssystemet i .NET Framework och SQL Server.",
+            "en": "Further developed the billing system in .NET Framework and SQL Server."
+          }
+        }
+      ],
+      "skills": ["C#", ".NET Framework", "SQL Server"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Uppsala universitet",
+      "degree": {"sv": "Kandidatexamen", "en": "Bachelor's degree"},
+      "fieldOfStudy": {"sv": "Datavetenskap", "en": "Computer Science"},
+      "startYear": 2003,
+      "endYear": 2006
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Microsoft Certified: Azure Solutions Architect Expert",
+      "issuer": "Microsoft",
+      "issuedDate": "2022-11-20",
+      "expiryDate": "2026-11-20",
+      "url": null
+    }
+  ],
+  "languages": [
+    {"language": "Svenska", "proficiency": "native"},
+    {"language": "Engelska", "proficiency": "fluent"},
+    {"language": "Tyska", "proficiency": "basic"}
+  ]
+}
