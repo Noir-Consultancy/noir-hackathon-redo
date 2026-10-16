@@ -20,7 +20,9 @@ def test_main_flow_with_stubs():
     pid = player["player_id"]
     mentor = client.get("/world").json()["mentors"][0]
 
-    reply = client.post(f"/npcs/{mentor['id']}/chat", json={"player_id": pid, "message": "Hej"})
+    reply = client.post(
+        f"/npcs/{mentor['id']}/chat", json={"player_id": pid, "message": "Hej, har du en quest?"}
+    )
     assert reply.json()["offered_quest_id"] == mentor["quest_id"]
 
     answer = "Jag kollar tester, scope och säkerhet noga."

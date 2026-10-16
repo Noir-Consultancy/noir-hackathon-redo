@@ -11,3 +11,5 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://app:app@localhost:54
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3.6:27b-coding-mxfp8")
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "ollama")
+# Optional, e.g. "none" to turn off thinking in reasoning models (qwen3). Empty: not sent.
+LLM_REASONING_EFFORT = os.environ.get("LLM_REASONING_EFFORT") or None

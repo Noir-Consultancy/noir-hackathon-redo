@@ -11,4 +11,5 @@ def get_chat_model(temperature: float = 0.7) -> ChatOpenAI:
         api_key=config.LLM_API_KEY,
         model=config.LLM_MODEL,
         temperature=temperature,
+        reasoning_effort=config.LLM_REASONING_EFFORT,
     )

@@ -1,9 +1,10 @@
 import Phaser from "phaser";
-import { getWorld } from "../api/client";
-import type { Point, World } from "../api/types";
+import { getProgress, getWorld } from "../api/client";
+import type { Point, World, Zone } from "../api/types";
 import { bus } from "../events";
 import { nearestWithin, TILE } from "./geometry";
-import { buildMap, type MapData } from "./mapgen";
+import { buildMap, type MapData, zoneIndexAt } from "./mapgen";
+import { MARKER_STYLE, markerFor } from "./markers";
 import {
   CHARACTERS_KEY,
   CHARACTERS_URL,
@@ -28,6 +29,8 @@ interface MentorSprite {
   id: string;
   pos: Point;
   sprite: Phaser.GameObjects.Sprite;
+  questId: string;
+  marker: Phaser.GameObjects.Text;
 }
 
 /** The world: a tile map generated from /world, sprite characters, arrow keys and E. */
@@ -38,6 +41,9 @@ export class WorldScene extends Phaser.Scene {
   private mentors: MentorSprite[] = [];
   private facing: Direction = "down";
   private hint!: Phaser.GameObjects.Text;
+  private zones: Zone[] = [];
+  private currentZone = -1;
+  private banner?: Phaser.GameObjects.Container;
   private active = false; // true once the player has a name and no modal is open
 
   constructor(private readonly ui: UiState) {
@@ -56,10 +62,16 @@ export class WorldScene extends Phaser.Scene {
     this.cursors = keyboard.createCursorKeys();
     keyboard.on("keydown-E", () => this.interact());
 
-    this.ui.onChange(() => this.setActive(this.ui.active));
+    this.ui.onChange(() => {
+      const wasActive = this.active;
+      this.setActive(this.ui.active);
+      // Player ready or a dialog closed: a quest may have been completed.
+      if (this.active && !wasActive) void this.refreshMarkers();
+    });
 
     try {
       this.drawWorld(await getWorld());
+      if (this.active) void this.refreshMarkers();
     } catch (err) {
       console.error("Could not load the world", err);
       const { width, height } = this.scale;
@@ -93,17 +105,7 @@ export class WorldScene extends Phaser.Scene {
     const width = map.width * TILE;
     const height = map.height * TILE;
 
-    for (const zone of world.zones) {
-      const { x, y } = zone.bounds;
-      this.add
-        .text((x + 1) * TILE + 4, (y + 1) * TILE + 4, zone.name, {
-          fontSize: "18px",
-          color: "#fff",
-          stroke: "#000",
-          strokeThickness: 4,
-        })
-        .setDepth(2);
-    }
+    this.zones = world.zones;
 
     const mentorBodies = this.physics.add.staticGroup();
     for (const m of world.mentors) {
@@ -130,7 +132,25 @@ export class WorldScene extends Phaser.Scene {
         })
         .setOrigin(0.5)
         .setDepth(2);
-      this.mentors.push({ id: m.id, pos, sprite });
+      const marker = this.add
+        .text(pos.x, pos.y - TILE * 1.6, MARKER_STYLE.quest.text, {
+          fontSize: "20px",
+          fontStyle: "bold",
+          color: MARKER_STYLE.quest.color,
+          stroke: "#000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5)
+        .setDepth(2);
+      this.tweens.add({
+        targets: marker,
+        y: marker.y - 4,
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+      this.mentors.push({ id: m.id, pos, sprite, questId: m.quest_id, marker });
     }
 
     const spawn = { x: (map.spawn.x + 0.5) * TILE, y: (map.spawn.y + 0.5) * TILE };
@@ -212,6 +232,58 @@ export class WorldScene extends Phaser.Scene {
     return layer("walls", map.walls).setCollisionByExclusion([EMPTY]);
   }
 
+  /** Updates "!" / "✓" from the player's completed quests; keeps them as they are on errors. */
+  private async refreshMarkers(): Promise<void> {
+    if (!this.ui.playerId || this.mentors.length === 0) return;
+    try {
+      const { completed_quests } = await getProgress(this.ui.playerId);
+      for (const m of this.mentors) {
+        const style = MARKER_STYLE[markerFor(m.questId, completed_quests)];
+        m.marker.setText(style.text).setColor(style.color);
+      }
+    } catch (err) {
+      console.warn("Could not refresh mentor markers", err);
+    }
+  }
+
+  /** Shows the zone's name and topic when the player walks into a new zone. */
+  private checkZone(): void {
+    const zone = zoneIndexAt(
+      this.zones,
+      Math.floor(this.player.x / TILE),
+      Math.floor(this.player.y / TILE),
+    );
+    if (zone < 0 || zone === this.currentZone) return;
+    this.currentZone = zone;
+    this.showBanner(this.zones[zone]);
+  }
+
+  private showBanner(zone: Zone): void {
+    this.banner?.destroy();
+    const { width, height } = this.scale;
+    const style = { color: "#fff", stroke: "#000", fontFamily: "serif" };
+    const title = this.add
+      .text(0, 0, `~ ${zone.name} ~`, { ...style, fontSize: "40px", strokeThickness: 6 })
+      .setOrigin(0.5, 1);
+    const topic = this.add
+      .text(0, 8, zone.topic, { ...style, fontSize: "20px", strokeThickness: 4 })
+      .setOrigin(0.5, 0);
+    const banner = this.add
+      .container(width / 2, height / 3, [title, topic])
+      .setScrollFactor(0)
+      .setDepth(10)
+      .setAlpha(0);
+    this.banner = banner;
+    this.tweens.chain({
+      targets: banner,
+      tweens: [
+        { alpha: 1, duration: 300 },
+        { alpha: 0, duration: 500, delay: 1500 },
+      ],
+      onComplete: () => banner.destroy(),
+    });
+  }
+
   private nearbyMentor() {
     if (!this.player) return undefined;
     return nearestWithin({ x: this.player.x, y: this.player.y }, this.mentors, TALK_RANGE);
@@ -230,6 +302,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.faceMentorsTowardsPlayer();
     if (!this.active) return;
+    this.checkZone();
     const { left, right, up, down } = this.cursors;
     const vx = (right.isDown ? 1 : 0) - (left.isDown ? 1 : 0);
     const vy = (down.isDown ? 1 : 0) - (up.isDown ? 1 : 0);
