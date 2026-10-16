@@ -7,7 +7,7 @@ import { WorldScene } from "./WorldScene";
 export function startGame(parent: HTMLElement): Phaser.Game {
   // Listen before Phaser boots: the UI may send player:ready before the scene exists.
   const ui = new UiState();
-  bus.on("player:ready", () => ui.playerReady());
+  bus.on("player:ready", ({ playerId }) => ui.playerReady(playerId));
   bus.on("ui:modal-open", () => ui.modalOpened());
   bus.on("ui:modal-close", () => ui.modalClosed());
 
