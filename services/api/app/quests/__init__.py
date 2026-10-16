@@ -47,9 +47,10 @@ def build_messages(quest: QuestDef, answer: str) -> list[Any]:
 
 
 def judge(quest: QuestDef, answer: str) -> Judgement:
+    messages = build_messages(quest, answer)
     try:
         model = get_chat_model(temperature=0).with_structured_output(Judgement)
-        result = model.invoke(build_messages(quest, answer))
+        result = model.invoke(messages)
     except Exception as err:
         log.exception("LLM judge failed for quest %s", quest.id)
         raise JudgeUnavailable(str(err)) from err
