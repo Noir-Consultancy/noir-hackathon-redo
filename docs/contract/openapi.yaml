@@ -154,6 +154,7 @@ paths:
                   cards: [{ id: c-review-ai-code, title: Granska AI-genererad kod, mentor_id: ada, summary: "Läs AI-kod som en kollegas PR…", when_to_use: "Varje gång en agent ändrat kod.", pitfalls: "Att lita på att gröna tester räcker." }]
                   achievements: [{ id: first-quest, title: Första questen!, description: Klara din första quest. }]
         "404": { description: Unknown quest or player }
+        "503": { description: The LLM judge is unavailable (down, timed out or invalid output). Nothing is recorded; the player can try again. }
 
 components:
   schemas:
