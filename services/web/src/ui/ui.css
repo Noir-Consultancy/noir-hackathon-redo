@@ -1,0 +1,80 @@
+:root {
+  --bg: #111;
+  --panel: rgba(20, 20, 28, 0.92);
+  --text: #f4f4f4;
+  --accent: #f2e94e;
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+#game {
+  width: 100vw;
+  height: 100vh;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#ui > * {
+  pointer-events: auto;
+}
+
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border-radius: 6px;
+}
+
+.hud:empty {
+  display: none;
+}
+
+.panel {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(640px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialog .log {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.dialog .me {
+  color: var(--accent);
+}
+
+.dialog form {
+  display: flex;
+  gap: 8px;
+}
+
+.dialog input {
+  flex: 1;
+}
+
+.close {
+  align-self: flex-end;
+}
