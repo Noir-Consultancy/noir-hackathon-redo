@@ -3,13 +3,16 @@ import { chat, createPlayer, getProgress, getWorld } from "../api/client";
 import type { Progress, World } from "../api/types";
 import { bus } from "../events";
 import { el } from "./dom";
+import { createHud, rewardEvents } from "./hud";
+import { createNotifier } from "./notify";
 import { questBox } from "./quest";
 
 const PLAYER_KEY = "kunskapsriket.playerId";
 
 export function startUi(root: HTMLElement): void {
-  const hud = el("div", { className: "hud" });
-  root.append(hud);
+  const hud = createHud();
+  root.append(hud.root);
+  const notify = createNotifier(root);
 
   let playerId = "";
   let progress: Progress | null = null;
@@ -23,8 +26,10 @@ export function startUi(root: HTMLElement): void {
   };
 
   const renderHud = (p: Progress) => {
+    // No notifications on the first load, only for what is gained while playing.
+    if (progress?.player_id === p.player_id) notify(rewardEvents(progress, p));
     progress = p;
-    hud.textContent = `${p.name} · Nivå ${p.level} · ${p.xp}/${p.xp_for_next_level} XP · Kort ${p.cards.length} · Badges ${p.achievements.length}`;
+    hud.render(p);
   };
 
   const ready = (p: Progress) => {
