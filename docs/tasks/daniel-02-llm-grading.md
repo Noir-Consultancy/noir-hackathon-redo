@@ -14,13 +14,16 @@ Spelarens svar på en quest bedöms av LLM:en mot questens `criteria` i stället
   vad som saknas utan att citera kriterierna.
 - LLM-fel (nere, timeout, ogiltig output) → `JudgeUnavailable`; routern svarar 503
   "Bedömningen är inte tillgänglig just nu, försök igen." Inget försök räknas.
-- Lokalt används `qwen3.5:9b` (endast `.env`, inget ändras i delade filer).
+- Lokalt används `qwen3.5:9b` (endast `.env`). Tänkandet stängs av med Roberts
+  `LLM_REASONING_EFFORT=none` (#24/#25) som `get_chat_model()` skickar vidare: ~1,5 s i
+  stället för ~20 s per bedömning. Ingen egen variabel.
 
 ## Filer
 - `services/api/app/quests/__init__.py`, `services/api/app/quests/router.py`
 - `services/api/tests/test_quests.py` (ny)
-- `services/api/tests/test_api.py`: huvudflödestestet använder i dag stubbdomaren; byts
-  till en falsk modell via conftest (delad testfil – nämns i PR:en)
+- `services/api/tests/conftest.py`: autouse-fixture som monkeypatchar
+  `quests.get_chat_model` med en falsk modell (samma mönster som Roberts `fake_llm`).
+  `test_api.py` behöver inte ändras.
 
 ## Kontrakt
 Inga ändringar i modeller. Ny felkod 503 på `POST /quests/{id}/attempt` – läggs till i
