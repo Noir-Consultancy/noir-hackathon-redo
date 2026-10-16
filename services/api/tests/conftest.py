@@ -3,7 +3,8 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from app import npc
+from app import npc, progress
+from app.progress.store import InMemoryPlayerStore
 
 
 class EchoChatModel(BaseChatModel):
@@ -30,3 +31,11 @@ def fake_llm(monkeypatch):
     npc._agents.clear()
     yield model
     npc._agents.clear()
+
+
+@pytest.fixture(autouse=True)
+def in_memory_store():
+    """Tests never touch Postgres: each test gets a fresh in-memory player store."""
+    progress.set_store(InMemoryPlayerStore())
+    yield
+    progress.set_store(None)
