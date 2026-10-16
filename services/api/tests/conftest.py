@@ -3,7 +3,8 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from app import npc
+from app import npc, progress
+from app.progress.store import InMemoryPlayerStore
 
 # A user message containing a keyword makes the fake model call that tool first.
 TOOL_TRIGGERS = {"quest": ("offer_quest", {}), "kort": ("lookup_card", {"topic": "granska"})}
@@ -47,3 +48,11 @@ def fake_llm(monkeypatch):
     npc._offered.clear()
     yield model
     npc._agents.clear()
+
+
+@pytest.fixture(autouse=True)
+def in_memory_store():
+    """Tests never touch Postgres: each test gets a fresh in-memory player store."""
+    progress.set_store(InMemoryPlayerStore())
+    yield
+    progress.set_store(None)
