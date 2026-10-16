@@ -37,17 +37,16 @@ def get_player_progress(config: RunnableConfig) -> str:
     )
 
 
-@tool(response_format="content_and_artifact")
+# return_direct: the turn ends here and the content is the mentor's reply, so the
+# model can't answer the quest for the player. The task itself is shown by the UI.
+@tool(response_format="content_and_artifact", return_direct=True)
 def offer_quest(config: RunnableConfig) -> tuple[str, str | None]:
-    """Erbjud spelaren din quest när samtalet är moget. Returnerar uppgiften."""
+    """Erbjud spelaren din quest när samtalet är moget. Avslutar ditt svar."""
     player_id, mentor_id = _ids(config)
     quest = get_quest(get_mentor(mentor_id).quest_id)
     if quest_done(player_id, quest.id):
-        return f'Spelaren har redan klarat "{quest.title}". Erbjud inget.', None
-    return (
-        f'Quest "{quest.title}" visas för spelaren. Uppgift: {quest.task} '
-        "Presentera uppgiften kort med egna ord. Svara inte på den åt spelaren."
-    ), quest.id
+        return f'Du har redan klarat min utmaning "{quest.title}". Fråga gärna vidare!', None
+    return f'Då har jag en utmaning åt dig: "{quest.title}". Lycka till!', quest.id
 
 
 @tool

@@ -10,8 +10,9 @@ till kunskapskort spelaren har låst upp.
 - Tre LangChain-verktyg i `app/npc/tools.py`. Spelare och mentor kommer från agentens
   `config` (`configurable.player_id`, `mentor_id`), inte från LLM:en.
 - `get_player_progress()`: nivå, XP, klarade quests (titlar), korttitlar, via `get_progress()`.
-- `offer_quest()`: returnerar mentorns quest-`task`. Om questen redan är klarad: säger det
-  och erbjuder inget. Verktyget returnerar quest-id som artefakt (`content_and_artifact`);
+- `offer_quest()`: `return_direct`, turen avslutas och verktygets text blir mentorns svar
+  ("Då har jag en utmaning åt dig: …"), så att modellen inte svarar på questen åt spelaren.
+  Uppgiften visas av UI:t. Om questen redan är klarad: säger det och erbjuder inget. Verktyget returnerar quest-id som artefakt (`content_and_artifact`);
   `chat()` sätter `offered_quest_id` bara i svaret där verktyget erbjöd questen.
 - `lookup_card(topic)`: söker bara bland spelarens upplåsta kort (titel och sammanfattning,
   enkel ordmatchning). Inget träff: "inget kort".
