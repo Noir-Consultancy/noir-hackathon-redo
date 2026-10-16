@@ -27,6 +27,11 @@ def set_store(store: PlayerStore | None) -> None:
     _store = store
 
 
+def init_store() -> None:
+    """Create storage (tables) at app startup."""
+    get_store().init()
+
+
 def level_for(xp: int) -> int:
     return 1 + xp // XP_PER_LEVEL
 
@@ -52,10 +57,7 @@ def _to_progress(p: PlayerRecord) -> Progress:
 
 def get_or_create_player(name: str) -> Progress:
     store = get_store()
-    player = store.get_by_name(name)
-    if player is None:
-        player = PlayerRecord(id=str(uuid.uuid4()), name=name)
-        store.save(player)
+    player = store.get_by_name(name) or store.create(PlayerRecord(id=str(uuid.uuid4()), name=name))
     return _to_progress(player)
 
 
@@ -68,22 +70,27 @@ def complete_quest(
     player_id: str, quest_id: str, xp: int, card_id: str
 ) -> tuple[int, Card | None, list[Achievement], Progress]:
     """Award a passed quest. Returns (xp_awarded, new_card, new_achievements, progress)."""
-    store = get_store()
-    player = store.get(player_id)
+    awarded = 0
+    new_achievements: list[Achievement] = []
+
+    def award(player: PlayerRecord) -> None:
+        nonlocal awarded
+        if quest_id in player.completed_quests:
+            return
+        awarded = xp
+        player.xp += xp
+        player.completed_quests.append(quest_id)
+        player.card_ids.append(card_id)
+        # TODO(package 4): evaluate achievement rules from data/world/achievements.yaml.
+        for a in get_achievement_defs():
+            if a.id == "first-quest" and a.id not in player.achievement_ids:
+                player.achievement_ids.append(a.id)
+                new_achievements.append(
+                    Achievement(**a.model_dump(include=set(Achievement.model_fields)))
+                )
+
+    player = get_store().update(player_id, award)
     if player is None:
         raise KeyError(f"Unknown player: {player_id}")
-    if quest_id in player.completed_quests:
-        return 0, None, [], _to_progress(player)
-    player.xp += xp
-    player.completed_quests.append(quest_id)
-    player.card_ids.append(card_id)
-    # TODO(package 4): evaluate achievement rules from data/world/achievements.yaml.
-    new_achievements: list[Achievement] = []
-    for a in get_achievement_defs():
-        if a.id == "first-quest" and a.id not in player.achievement_ids:
-            player.achievement_ids.append(a.id)
-            new_achievements.append(
-                Achievement(**a.model_dump(include=set(Achievement.model_fields)))
-            )
-    store.save(player)
-    return xp, get_card(card_id), new_achievements, _to_progress(player)
+    card = get_card(card_id) if awarded else None
+    return awarded, card, new_achievements, _to_progress(player)
