@@ -254,3 +254,32 @@ body {
     opacity: 0;
   }
 }
+
+.dialog .thinking {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.dialog .thinking::after {
+  content: "…";
+  display: inline-block;
+  animation: thinking 1.2s steps(4) infinite;
+  overflow: hidden;
+  vertical-align: bottom;
+  width: 0;
+}
+
+@keyframes thinking {
+  to {
+    width: 1.2em;
+  }
+}
+
+.panel .error {
+  margin: 0;
+  color: #f28b82;
+}
+
+.panel .error:empty {
+  display: none;
+}

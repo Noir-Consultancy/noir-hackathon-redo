@@ -16,7 +16,10 @@ def attempt(quest_id: str, body: AttemptRequest) -> AttemptResult:
     if current is None:
         raise HTTPException(404, f"Unknown player: {body.player_id}")
 
-    judgement = quests.judge(quest, body.answer)
+    try:
+        judgement = quests.judge(quest, body.answer)
+    except quests.JudgeUnavailable as err:
+        raise HTTPException(503, "Bedömningen är inte tillgänglig just nu, försök igen.") from err
     if not judgement.passed:
         return AttemptResult(
             passed=False,
