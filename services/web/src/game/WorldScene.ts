@@ -17,6 +17,7 @@ import {
   SPRITE_TILE,
 } from "./sprites";
 import { EMPTY, TILESET_KEY, TILESET_TILE, TILESET_URL } from "./tiles";
+import type { UiState } from "./uiState";
 
 const SPEED = 180;
 const TALK_RANGE = TILE * 1.8;
@@ -39,7 +40,7 @@ export class WorldScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   private active = false; // true once the player has a name and no modal is open
 
-  constructor() {
+  constructor(private readonly ui: UiState) {
     super("world");
   }
 
@@ -55,9 +56,7 @@ export class WorldScene extends Phaser.Scene {
     this.cursors = keyboard.createCursorKeys();
     keyboard.on("keydown-E", () => this.interact());
 
-    bus.on("player:ready", () => this.setActive(true));
-    bus.on("ui:modal-open", () => this.setActive(false));
-    bus.on("ui:modal-close", () => this.setActive(true));
+    this.ui.onChange(() => this.setActive(this.ui.active));
 
     try {
       this.drawWorld(await getWorld());
