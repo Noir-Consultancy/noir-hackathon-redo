@@ -20,7 +20,10 @@ export function questBox(
 ): HTMLElement {
   const status = el("span", { className: "quest-status" });
   const feedback = el("p", { className: "quest-feedback" });
-  const answer = el("textarea", { placeholder: "Ditt svar…", rows: 3 });
+  const answer = el("textarea", {
+    placeholder: "Ditt svar… (Enter skickar, Shift+Enter ny rad)",
+    rows: 3,
+  });
   const submit = el("button", { type: "submit" }, "Skicka svar");
   const form = el("form", { className: "quest-form" }, answer, submit);
   const box = el(
@@ -39,6 +42,15 @@ export function questBox(
     form.remove();
   };
   if (completed) markCompleted();
+
+  // Enter submits, Shift+Enter adds a new line. Skip while an IME is composing.
+  answer.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      // requestSubmit() ignores the disabled button, so don't resend while waiting.
+      if (!submit.disabled) form.requestSubmit();
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
