@@ -126,12 +126,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [player_id, answer]
+              required: [player_id]
               properties:
                 player_id: { type: string, format: uuid }
-                answer: { type: string, minLength: 1, maxLength: 4000 }
+                answer: { type: string, maxLength: 4000, description: "Required (non-blank) for all quests except boss" }
                 selected_statements:
                   type: array
+                  maxItems: 20
                   items: { type: integer, minimum: 0 }
                   description: "Boss quests: 0-based indices of the statements the player marks as wrong"
             example: { player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10, answer: "Att testerna täcker ändringen, att den följer projektets konventioner och att inget onödigt har ändrats." }

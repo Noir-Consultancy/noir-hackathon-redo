@@ -12,13 +12,13 @@ API-schemana finns i [openapi.yaml](openapi.yaml). Här är fälten och reglerna
 |---|---|---|
 | **Zone** | `id`, `name`, `topic`, `bounds {x, y, w, h}`, `color` (hex), `required_level` (nivå som krävs för att gå in, standard 1) | `{"id": "agentbyn", "name": "Agentbyn", "topic": "Kodagenter", "bounds": {"x": 0, "y": 0, "w": 20, "h": 15}, "color": "#7fb069", "required_level": 1}` |
 | **Mentor** | `id`, `name`, `title`, `zone_id`, `position {x, y}`, `color`, `quest_id` | `{"id": "ada", "name": "Ada", "title": "Kodagentveteranen", "zone_id": "agentbyn", "position": {"x": 8, "y": 6}, "color": "#e07a5f", "quest_id": "q-ada-1"}` |
-| **Quest** | `id`, `mentor_id`, `title`, `task`, `kind` (`explain` \| `solve` \| `choose` \| `boss`), `xp`, `card_id`, `statements` (bossens påståenden, tom lista för andra quests) | `{"id": "q-ada-1", "mentor_id": "ada", "title": "Granska agentens kod", "task": "Förklara tre saker du alltid kollar…", "kind": "explain", "xp": 50, "card_id": "c-review-ai-code"}` |
+| **Quest** | `id`, `mentor_id`, `title`, `task`, `kind` (`explain` \| `solve` \| `choose` \| `boss`), `xp`, `card_id`, `statements` (bossens påståenden, tom lista för andra quests) | `{"id": "q-ada-1", "mentor_id": "ada", "title": "Granska agentens kod", "task": "Förklara tre saker du alltid kollar…", "kind": "explain", "xp": 50, "card_id": "c-review-ai-code", "statements": []}` |
 | **CardSummary** | `id`, `title`, `mentor_id` | `{"id": "c-review-ai-code", "title": "Granska AI-genererad kod", "mentor_id": "ada"}` |
 | **Card** | `CardSummary` + `summary`, `when_to_use`, `pitfalls` | se openapi.yaml |
 | **Achievement** | `id`, `title`, `description` | `{"id": "first-quest", "title": "Första questen!", "description": "Klara din första quest."}` |
 
 Bara servern ser följande (de finns i YAML men skickas inte ut): mentorns `persona` och
-`topics`, questens `criteria` (bedömningskriterier) och `wrong_statements` (index för bossens felaktiga påståenden) och achievementens `rule`.
+`topics`, questens `criteria` (bedömningskriterier), `wrong_statements` (index för bossens felaktiga påståenden) och `explanations` (varför varje påstående stämmer eller är fel), samt achievementens `rule`.
 
 ## Spelare
 
@@ -29,4 +29,4 @@ Bara servern ser följande (de finns i YAML men skickas inte ut): mentorns `pers
 - Nivå: `level = 1 + xp // 100`, `xp_for_next_level = level * 100`.
 - `POST /players` med ett namn som redan finns returnerar den spelaren (ingen inloggning).
 - En quest ger XP bara första gången den klaras.
-- Bossquest: spelaren skickar `selected_statements` (0-baserade index) med i `answer`-anropet. Godkänt kräver exakt rätt index och en motivering som uppfyller `criteria`.
+- Bossquest: spelaren skickar bara `selected_statements` (0-baserade index), inget `answer`. Godkänt kräver exakt rätt index och bedöms utan LLM. Fel ger samma ledtråd oavsett vad som var fel. Rätt ger en förklaring per påstående i `feedback`.
