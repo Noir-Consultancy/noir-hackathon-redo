@@ -49,8 +49,8 @@ och leder vidare till dina ämnen: {topics}. Ge en ny vinkel, ställ gärna en f
 Spelaren har lärt sig: {cards}
 Knyt an till kortet "{title}": {summary}
 
-Regler: på svenska, i din roll, högst 2 meningar, du-tilltal. Hitta inte på något om
-spelaren utöver korten ovan. Skriv bara repliken.
+Regler: på svenska, i din roll, högst 2 korta meningar (under 30 ord), du-tilltal.
+Hitta inte på något om spelaren utöver korten ovan. Skriv bara repliken.
 
 Exempel på bra repliker (härma stilen, inte innehållet):
 - "Du lärde dig om kontextfönster hos Karl – visste du att RAG är ett sätt att hålla det litet?"

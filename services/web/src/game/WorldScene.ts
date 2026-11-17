@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { getProgress, getWorld } from "../api/client";
-import type { Point, World, Zone } from "../api/types";
+import { getProgress, getRemark, getWorld } from "../api/client";
+import type { Point, Rect, World, Zone } from "../api/types";
 import { bus } from "../events";
 import { nearestWithin, TILE } from "./geometry";
 import { buildMap, type MapData, zoneIndexAt } from "./mapgen";
@@ -19,18 +19,31 @@ import {
 } from "./sprites";
 import { EMPTY, TILESET_KEY, TILESET_TILE, TILESET_URL } from "./tiles";
 import type { UiState } from "./uiState";
+import { pickWanderPath } from "./wander";
 
 const SPEED = 180;
 const TALK_RANGE = TILE * 1.8;
 const SCALE = TILE / SPRITE_TILE;
-const FACE_RANGE = TILE * 4; // mentors turn towards the player within this distance
+const FACE_RANGE = TILE * 4; // mentors stop and turn towards the player within this distance
+const REMARK_RANGE = TILE * 3; // walking this close makes a mentor remark on something
+const WANDER_SPEED = 40;
+const REST_MS = [2000, 5000]; // pause between walks
+const THINKING_DELAY = 300; // show "…" only if the remark takes longer than this
 
 interface MentorSprite {
   id: string;
-  pos: Point;
+  pos: Point; // pixels, follows the body
+  body: Phaser.Physics.Arcade.Body;
+  view: Phaser.GameObjects.Container; // sprite, name, marker and bubble
   sprite: Phaser.GameObjects.Sprite;
   questId: string;
   marker: Phaser.GameObjects.Text;
+  bubble: Phaser.GameObjects.Text;
+  bounds: Rect; // the mentor's zone, in tiles
+  path: Point[]; // remaining waypoints, pixels
+  restUntil: number; // scene time
+  near: boolean; // player within REMARK_RANGE last frame
+  talking: boolean; // a remark is loading or showing
 }
 
 /** The world: a tile map generated from /world, sprite characters, arrow keys and E. */
@@ -42,6 +55,7 @@ export class WorldScene extends Phaser.Scene {
   private facing: Direction = "down";
   private hint!: Phaser.GameObjects.Text;
   private zones: Zone[] = [];
+  private map!: MapData;
   private currentZone = -1;
   private banner?: Phaser.GameObjects.Container;
   private active = false; // true once the player has a name and no modal is open
@@ -106,42 +120,45 @@ export class WorldScene extends Phaser.Scene {
     const height = map.height * TILE;
 
     this.zones = world.zones;
+    this.map = map;
 
-    const mentorBodies = this.physics.add.staticGroup();
+    const mentorBodies: Phaser.GameObjects.Zone[] = [];
     for (const m of world.mentors) {
       const pos = { x: (m.position.x + 0.5) * TILE, y: (m.position.y + 0.5) * TILE };
-      const sprite = this.add.sprite(pos.x, pos.y, CHARACTERS_KEY, mentorFrame(m.id));
-      sprite.setScale(SCALE);
-      mentorBodies.add(sprite);
+      // An invisible body walks and blocks the player; the view follows it.
+      const hitbox = this.add.zone(pos.x, pos.y, TILE * 0.8, TILE * 0.8);
+      this.physics.add.existing(hitbox);
+      const body = (hitbox.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+      body.pushable = false;
+      mentorBodies.push(hitbox);
+      const sprite = this.add.sprite(0, 0, CHARACTERS_KEY, mentorFrame(m.id)).setScale(SCALE);
       // Breathe: a slow 1 px bob, offset per mentor so they don't move in sync.
       this.tweens.add({
         targets: sprite,
-        y: pos.y - 1,
+        y: -1,
         duration: 900,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
         delay: this.mentors.length * 300,
       });
-      this.add
-        .text(pos.x, pos.y - TILE, m.name, {
+      const name = this.add
+        .text(0, -TILE, m.name, {
           fontSize: "14px",
           color: "#fff",
           stroke: "#000",
           strokeThickness: 3,
         })
-        .setOrigin(0.5)
-        .setDepth(2);
+        .setOrigin(0.5);
       const marker = this.add
-        .text(pos.x, pos.y - TILE * 1.6, MARKER_STYLE.quest.text, {
+        .text(0, -TILE * 1.6, MARKER_STYLE.quest.text, {
           fontSize: "20px",
           fontStyle: "bold",
           color: MARKER_STYLE.quest.color,
           stroke: "#000",
           strokeThickness: 4,
         })
-        .setOrigin(0.5)
-        .setDepth(2);
+        .setOrigin(0.5);
       this.tweens.add({
         targets: marker,
         y: marker.y - 4,
@@ -150,7 +167,33 @@ export class WorldScene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
-      this.mentors.push({ id: m.id, pos, sprite, questId: m.quest_id, marker });
+      const bubble = this.add
+        .text(0, -TILE * 2.1, "", {
+          fontSize: "14px",
+          color: "#000",
+          backgroundColor: "#fff",
+          padding: { x: 8, y: 6 },
+          wordWrap: { width: TILE * 7 },
+        })
+        .setOrigin(0.5, 1)
+        .setVisible(false);
+      const view = this.add.container(pos.x, pos.y, [sprite, name, marker, bubble]).setDepth(2);
+      const zone = world.zones.find((z) => z.id === m.zone_id);
+      this.mentors.push({
+        id: m.id,
+        pos,
+        body,
+        view,
+        sprite,
+        questId: m.quest_id,
+        marker,
+        bubble,
+        bounds: zone?.bounds ?? { ...m.position, w: 1, h: 1 },
+        path: [],
+        restUntil: 0,
+        near: false,
+        talking: false,
+      });
     }
 
     const spawn = { x: (map.spawn.x + 0.5) * TILE, y: (map.spawn.y + 0.5) * TILE };
@@ -202,12 +245,83 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** Mentors close to the player turn to face them (characters face right by default). */
-  private faceMentorsTowardsPlayer(): void {
+  /**
+   * Mentors walk to nearby cells in their zone and rest in between. Close to the player, or
+   * while a dialog is open, they stop and face the player (characters face right by default).
+   */
+  private moveMentors(time: number): void {
     for (const m of this.mentors) {
+      m.pos.x = m.body.center.x;
+      m.pos.y = m.body.center.y;
+      m.view.setPosition(m.pos.x, m.pos.y);
+      this.placeBubble(m);
       const dist = Phaser.Math.Distance.Between(m.pos.x, m.pos.y, this.player.x, this.player.y);
       if (dist < FACE_RANGE) m.sprite.setFlipX(this.player.x < m.pos.x);
+      if (dist < FACE_RANGE || !this.active) {
+        m.body.stop();
+        continue;
+      }
+      const next = m.path[0];
+      if (!next) {
+        m.body.stop();
+        if (time < m.restUntil) continue;
+        const cell = { x: Math.floor(m.pos.x / TILE), y: Math.floor(m.pos.y / TILE) };
+        const path = pickWanderPath(this.map, m.bounds, cell) ?? [];
+        m.path = path.map((p) => ({ x: (p.x + 0.5) * TILE, y: (p.y + 0.5) * TILE }));
+        m.restUntil = time + Phaser.Math.Between(REST_MS[0], REST_MS[1]);
+      } else if (Phaser.Math.Distance.BetweenPoints(m.pos, next) < 2) {
+        m.body.reset(next.x, next.y);
+        m.path.shift();
+      } else {
+        this.physics.moveTo(m.body.gameObject, next.x, next.y, WANDER_SPEED);
+        if (Math.abs(next.x - m.pos.x) > 1) m.sprite.setFlipX(next.x < m.pos.x);
+      }
     }
+  }
+
+  /** Above the mentor, or below it if it would go off the top of the screen. */
+  private placeBubble(m: MentorSprite): void {
+    if (!m.bubble.visible) return;
+    const above = m.pos.y - this.cameras.main.worldView.y > TILE * 2.1 + m.bubble.height;
+    if (above) m.bubble.setOrigin(0.5, 1).setY(-TILE * 2.1);
+    else m.bubble.setOrigin(0.5, 0).setY(TILE * 0.6);
+  }
+
+  /** A mentor remarks on something when the player walks up to it, once per approach. */
+  private checkRemarks(): void {
+    const playerId = this.ui.playerId;
+    if (!this.active || !playerId) return;
+    for (const m of this.mentors) {
+      const near =
+        Phaser.Math.Distance.Between(m.pos.x, m.pos.y, this.player.x, this.player.y) < REMARK_RANGE;
+      if (near && !m.near && !m.talking) void this.remark(m, playerId);
+      m.near = near;
+    }
+  }
+
+  /** "…" while the remark loads, then the remark for a while, even if the player walks away. */
+  private async remark(m: MentorSprite, playerId: string): Promise<void> {
+    m.talking = true;
+    const thinking = this.time.delayedCall(THINKING_DELAY, () =>
+      m.bubble.setText("…").setVisible(true),
+    );
+    let text: string | null = null;
+    try {
+      text = (await getRemark(m.id, playerId)).remark;
+    } catch (err) {
+      console.warn("Could not get a remark", err);
+    }
+    thinking.remove();
+    if (!text) {
+      m.bubble.setVisible(false);
+      m.talking = false;
+      return;
+    }
+    m.bubble.setText(text).setVisible(true);
+    this.time.delayedCall(Math.min(3000 + text.length * 60, 12000), () => {
+      m.bubble.setVisible(false);
+      m.talking = false;
+    });
   }
 
   /** Ground and wall layers from 16 px tiles scaled up to TILE. Returns the wall layer. */
@@ -294,13 +408,14 @@ export class WorldScene extends Phaser.Scene {
     if (mentor) bus.emit("npc:interact", { npcId: mentor.id });
   }
 
-  update(): void {
+  update(time: number): void {
     if (!this.body) return;
+    this.moveMentors(time);
+    this.checkRemarks();
     const mentor = this.nearbyMentor();
     this.hint.setVisible(this.active && !!mentor);
     if (mentor) this.hint.setPosition(mentor.pos.x, mentor.pos.y + TILE);
 
-    this.faceMentorsTowardsPlayer();
     if (!this.active) return;
     this.checkZone();
     const { left, right, up, down } = this.cursors;
