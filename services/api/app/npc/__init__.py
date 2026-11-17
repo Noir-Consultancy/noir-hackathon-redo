@@ -1,6 +1,7 @@
 """Mentor agents (package 3): a LangGraph agent per mentor with session memory."""
 
 import logging
+import random
 import re
 
 from langchain.agents import create_agent
@@ -11,7 +12,7 @@ from app.llm import get_chat_model
 from app.models import ChatReply, Remark
 from app.npc.tools import TOOLS, quest_done
 from app.progress import get_progress
-from app.world import MentorDef
+from app.world import MentorDef, get_mentor, get_quest
 
 log = logging.getLogger(__name__)
 
@@ -43,21 +44,35 @@ _offered: set[str] = set()  # threads where the quest has been offered
 _remarked: set[str] = set()  # "player:mentor:card" the mentor has commented on
 
 REMARK_PROMPT = """
-Spelaren går förbi dig. Säg spontant något kort som knyter an till det hen nyss lärt sig
-och leder vidare till dina ämnen: {topics}. Ge en ny vinkel, ställ gärna en fråga.
+Spelaren går förbi dig. Säg spontant en enda kort mening (högst 15 ord) på svenska, i din
+roll och med du-tilltal.
 
-Spelaren har lärt sig: {cards}
-Knyt an till kortet "{title}": {summary}
+Det här ska repliken göra: {angle}
+Exempel på stilen (härma inte innehållet): "{example}"
 
-Regler: på svenska, i din roll, högst 2 korta meningar (under 30 ord), du-tilltal.
-Hitta inte på något om spelaren utöver korten ovan. Skriv bara repliken.
-
-Exempel på bra repliker (härma stilen, inte innehållet):
-- "Du lärde dig om kontextfönster hos Karl – visste du att RAG är ett sätt att hålla det litet?"
-- "Granska AI-kod, sa du? Då vet du redan hälften av det jag tänkte fråga dig om agenter."
-- "Hm, du ser ut som någon som just förstått embeddings. Har du funderat på vad som händer när
-  frågan är nästan rätt men inte riktigt?"
+Bakgrund: spelaren har lärt sig {cards}, senast "{title}" från {teacher}. Börja inte med att
+återge vad spelaren lärt sig, och hitta inte på något om hen. Skriv bara repliken.
 """
+
+# One angle is picked at random per remark, so remarks don't all sound the same.
+REMARK_ANGLES = {
+    "question": (
+        "Ställ en kort, nyfiken fråga till spelaren om något i dina ämnen: {topics}.",
+        "Har du någonsin låtit en agent skriva testerna först?",
+    ),
+    "tip": (
+        "Dela ett konkret tips eller en kul detalj från dina ämnen: {topics}.",
+        "Visste du att en bra AGENTS.md sparar fler tokens än du tror?",
+    ),
+    "quest": (
+        'Väck nyfikenhet på din utmaning "{quest}" utan att avslöja den.',
+        "Jag har en utmaning som bara de skarpaste klarar – vågar du?",
+    ),
+    "card": (
+        'Knyt an till kortet "{title}" med en ny vinkel från dina ämnen: {topics}.',
+        "Kort kontext är bra, men vad händer när svaret ligger i en annan fil?",
+    ),
+}
 
 
 def system_prompt(mentor: MentorDef) -> str:
@@ -106,18 +121,31 @@ def chat(mentor: MentorDef, player_id: str, message: str) -> ChatReply:
 
 
 def remark(mentor: MentorDef, player_id: str) -> Remark:
-    """A short remark on the player's newest card this mentor hasn't commented on yet."""
+    """A one-sentence remark, once per card the player has that this mentor hasn't remarked on."""
     progress = get_progress(player_id)
     cards = progress.cards if progress else []
     new = [c for c in cards if f"{player_id}:{mentor.id}:{c.id}" not in _remarked]
     if not new:
         return Remark(remark=None)
     card = new[-1]
+    teacher = (
+        "dig"
+        if card.mentor_id == mentor.id
+        else getattr(get_mentor(card.mentor_id), "name", "en mentor")
+    )
+    angles = [
+        a for a in REMARK_ANGLES if a != "quest" or not quest_done(player_id, mentor.quest_id)
+    ]
+    angle, example = REMARK_ANGLES[random.choice(angles)]
+    quest = get_quest(mentor.quest_id)
     prompt = REMARK_PROMPT.format(
-        topics=", ".join(mentor.topics),
-        cards=", ".join(c.title for c in cards),
+        angle=angle.format(
+            topics=", ".join(mentor.topics), quest=quest.title if quest else "", title=card.title
+        ),
+        example=example,
+        cards=", ".join(f'"{c.title}"' for c in cards),
         title=card.title,
-        summary=card.summary.strip(),
+        teacher=teacher,
     )
     try:
         reply = get_chat_model().invoke(
@@ -126,5 +154,9 @@ def remark(mentor: MentorDef, player_id: str) -> Remark:
     except Exception:
         log.exception("Remark failed for mentor %s", mentor.id)
         return Remark(remark=None)
+    text = _THINK.sub("", reply.text).strip()
+    if not text:
+        log.warning("Empty remark from mentor %s", mentor.id)
+        return Remark(remark=None)
     _remarked.add(f"{player_id}:{mentor.id}:{card.id}")
-    return Remark(remark=_THINK.sub("", reply.text).strip() or None)
+    return Remark(remark=text)
