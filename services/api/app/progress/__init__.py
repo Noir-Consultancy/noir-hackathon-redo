@@ -7,6 +7,7 @@ import uuid
 
 from app.config import DATABASE_URL
 from app.models import Achievement, Card, Progress
+from app.progress.achievements import is_earned
 from app.progress.store import PlayerRecord, PlayerStore, SqlPlayerStore
 from app.world import get_achievement_defs, get_card
 
@@ -81,9 +82,9 @@ def complete_quest(
         player.xp += xp
         player.completed_quests.append(quest_id)
         player.card_ids.append(card_id)
-        # TODO(package 4): evaluate achievement rules from data/world/achievements.yaml.
+        level = level_for(player.xp)
         for a in get_achievement_defs():
-            if a.id == "first-quest" and a.id not in player.achievement_ids:
+            if a.id not in player.achievement_ids and is_earned(a.rule, player, level):
                 player.achievement_ids.append(a.id)
                 new_achievements.append(
                     Achievement(**a.model_dump(include=set(Achievement.model_fields)))

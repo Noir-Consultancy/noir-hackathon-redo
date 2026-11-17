@@ -1,5 +1,6 @@
 # Achievements. rule is server-side only and evaluated by app/progress. Owner: package 4.
-# Rule types (proposal): quests_completed {count}, zone_completed {zone_id}, level_reached {level}
+# Rule types: quests_completed {count}, zone_completed {zone_id}, level_reached {level},
+# cards_collected (all cards in cards.yaml)
 - id: first-quest
   title: Första questen!
   description: Klara din första quest.
@@ -15,4 +16,4 @@
 - id: all-cards
   title: Codex-samlaren
   description: Samla alla kunskapskort.
-  rule: { type: quests_completed, count: 3 }
+  rule: { type: cards_collected }

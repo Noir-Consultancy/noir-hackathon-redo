@@ -28,12 +28,12 @@ def test_unknown_player_has_no_progress():
     assert progress.get_progress("does-not-exist") is None
 
 
-def test_complete_quest_awards_xp_card_and_first_achievement(quest):
+def test_complete_quest_awards_xp_card_and_achievements(quest):
     pid = progress.get_or_create_player("Testa").player_id
     xp, card, achievements, updated = progress.complete_quest(pid, quest.id, 150, quest.card_id)
     assert xp == 150
     assert card is not None and card.id == quest.card_id
-    assert [a.id for a in achievements] == ["first-quest"]
+    assert [a.id for a in achievements] == ["first-quest", "agentbyns-hjalte", "level-2"]
     assert (updated.xp, updated.level) == (150, 2)
     assert progress.get_progress(pid) == updated
 
