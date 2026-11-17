@@ -1,7 +1,6 @@
 # --- Claude Code: personal/local settings ---
 .claude/settings.local.json
 CLAUDE.local.md
-AGENTS.local.md
 
 # --- Secrets & environment ---
 .env
