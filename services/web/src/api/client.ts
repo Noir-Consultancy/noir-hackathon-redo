@@ -3,12 +3,23 @@ import type { AttemptResult, ChatReply, Progress, Remark, World } from "./types"
 
 const BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
+/** A non-2xx response; `status` tells e.g. a missing player (404) from a server error. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
-  if (!res.ok) throw new Error(`${init?.method ?? "GET"} ${path} failed: ${res.status}`);
+  if (!res.ok)
+    throw new ApiError(`${init?.method ?? "GET"} ${path} failed: ${res.status}`, res.status);
   return (await res.json()) as T;
 }
 

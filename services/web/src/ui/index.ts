@@ -1,5 +1,5 @@
 // UI overlay (owner: package 2): name prompt, HUD, dialog panel and codex.
-import { chat, createPlayer, getProgress, getWorld } from "../api/client";
+import { ApiError, chat, createPlayer, getProgress, getWorld } from "../api/client";
 import type { Progress, World } from "../api/types";
 import { bus } from "../events";
 import { codexPanel } from "./codex";
@@ -8,12 +8,17 @@ import { el } from "./dom";
 import { createHud, rewardEvents } from "./hud";
 import { createNotifier } from "./notify";
 import { questBox } from "./quest";
+import { deviceSaves, type Save } from "./saves";
 
-const PLAYER_KEY = "kunskapsriket.playerId";
 const SLOW_MS = 10_000;
 
 export function startUi(root: HTMLElement): void {
-  const hud = createHud();
+  const saves = deviceSaves();
+  // Back to the start menu: reloading also resets the game world for the next player.
+  const hud = createHud(() => {
+    saves.leave();
+    location.reload();
+  });
   root.append(hud.root);
   const notify = createNotifier(root);
   const controls = createControls();
@@ -48,25 +53,32 @@ export function startUi(root: HTMLElement): void {
 
   const ready = (p: Progress) => {
     playerId = p.player_id;
-    try {
-      localStorage.setItem(PLAYER_KEY, playerId);
-    } catch {
-      // Storage unavailable: the player just enters the name again next time.
-    }
+    saves.play({ player_id: p.player_id, name: p.name });
     renderHud(p);
     controls.show();
     bus.emit("player:ready", { playerId });
   };
 
-  const askName = () => {
+  /** Name prompt for a new game; an existing name continues that save. */
+  const askName = (back?: () => void) => {
     const input = el("input", { placeholder: "Ditt namn", maxLength: 40, required: true });
     const error = el("p", { className: "error" });
+    const buttons = el("div", { className: "panel-buttons" });
+    if (back) {
+      const cancel = el("button", { type: "button" }, "Tillbaka");
+      cancel.addEventListener("click", () => {
+        form.remove();
+        back();
+      });
+      buttons.append(cancel);
+    }
+    buttons.append(el("button", { type: "submit" }, "Börja"));
     const form = el(
       "form",
       { className: "panel" },
-      el("h2", {}, "Välkommen till Kunskapsriket"),
+      el("h2", {}, back ? "Nytt spel" : "Välkommen till Kunskapsriket"),
       input,
-      el("button", { type: "submit" }, "Börja"),
+      buttons,
       error,
     );
     form.addEventListener("submit", async (e) => {
@@ -190,12 +202,62 @@ export function startUi(root: HTMLElement): void {
     else if (!codex && !typing && !modalOpen && e.key.toLowerCase() === "c") void openCodex();
   });
 
-  let saved: string | null = null;
-  try {
-    saved = localStorage.getItem(PLAYER_KEY);
-  } catch {
-    saved = null;
-  }
-  if (saved) getProgress(saved).then(ready, askName);
-  else askName();
+  /** Start menu: continue one of this device's saves, or start a new game. */
+  const showMenu = (entries: { save: Save; progress: Progress | null }[]) => {
+    const list = el("div", { className: "menu-saves" });
+    const panel = el("div", { className: "panel menu" }, el("h2", {}, "Kunskapsriket"), list);
+    for (const { save, progress: p } of entries) {
+      const label = p ? `Fortsätt som ${p.name} · nivå ${p.level}` : `Fortsätt som ${save.name}`;
+      const pick = el("button", { type: "button" }, label);
+      pick.addEventListener("click", async () => {
+        try {
+          ready(p ?? (await getProgress(save.player_id)));
+          panel.remove();
+        } catch {
+          pick.textContent = `${save.name}: kunde inte nå servern, försök igen`;
+        }
+      });
+      list.append(pick);
+    }
+    const newGame = el("button", { type: "button", className: "menu-new" }, "Nytt spel");
+    newGame.addEventListener("click", () => {
+      panel.remove();
+      askName(() => showMenu(entries));
+    });
+    panel.append(newGame);
+    root.append(panel);
+    (list.firstElementChild as HTMLElement | null)?.focus();
+  };
+
+  // Fetches each save's progress for the menu; saves the server no longer has are forgotten.
+  const loadSaves = () =>
+    Promise.all(
+      saves.list().map(async (save) => {
+        try {
+          return { save, progress: await getProgress(save.player_id) };
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 404) {
+            saves.forget(save.player_id);
+            return null;
+          }
+          return { save, progress: null }; // server unreachable: still offer the save
+        }
+      }),
+    ).then((entries) => entries.filter((e) => e !== null));
+
+  const start = async () => {
+    const current = saves.current();
+    if (current) {
+      try {
+        ready(await getProgress(current));
+        return;
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) saves.forget(current);
+      }
+    }
+    const entries = await loadSaves();
+    if (entries.length > 0) showMenu(entries);
+    else askName();
+  };
+  void start();
 }

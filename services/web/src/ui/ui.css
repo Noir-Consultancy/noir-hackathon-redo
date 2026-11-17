@@ -449,3 +449,46 @@ body {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.panel-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.menu {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 32px));
+}
+
+.menu h2 {
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.menu-saves {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu button {
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+}
+
+.menu .menu-new {
+  margin-top: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.hud-menu {
+  margin-left: auto;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 0.9em;
+}

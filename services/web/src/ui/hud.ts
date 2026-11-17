@@ -28,14 +28,17 @@ export function rewardEvents(prev: Progress, next: Progress, zones: Zone[] = [])
   return events;
 }
 
-export function createHud() {
+/** `onMenu` is called by the HUD's "Meny" button. */
+export function createHud(onMenu: () => void) {
   const level = el("div", { className: "hud-level" });
   const name = el("div", { className: "hud-name" });
   const fill = el("div", { className: "hud-xp-fill" });
   const xpText = el("span", { className: "hud-xp-text" });
   const cardCount = el("span");
   const badgeCount = el("span");
-  const counts = el("div", { className: "hud-counts" }, cardCount, badgeCount);
+  const menu = el("button", { type: "button", className: "hud-menu" }, "Meny");
+  menu.addEventListener("click", onMenu);
+  const counts = el("div", { className: "hud-counts" }, cardCount, badgeCount, menu);
   const root = el(
     "div",
     { className: "hud" },
