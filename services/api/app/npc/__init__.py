@@ -1,15 +1,19 @@
 """Mentor agents (package 3): a LangGraph agent per mentor with session memory."""
 
+import logging
 import re
 
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.llm import get_chat_model
-from app.models import ChatReply
+from app.models import ChatReply, Remark
 from app.npc.tools import TOOLS, quest_done
+from app.progress import get_progress
 from app.world import MentorDef
+
+log = logging.getLogger(__name__)
 
 RULES = """
 Regler:
@@ -36,6 +40,24 @@ _ASKS_FOR_QUEST = re.compile(r"\b(quest|utmaning|uppdrag)", re.IGNORECASE)
 _checkpointer = InMemorySaver()
 _agents: dict[str, object] = {}
 _offered: set[str] = set()  # threads where the quest has been offered
+_remarked: set[str] = set()  # "player:mentor:card" the mentor has commented on
+
+REMARK_PROMPT = """
+Spelaren går förbi dig. Säg spontant något kort som knyter an till det hen nyss lärt sig
+och leder vidare till dina ämnen: {topics}. Ge en ny vinkel, ställ gärna en fråga.
+
+Spelaren har lärt sig: {cards}
+Knyt an till kortet "{title}": {summary}
+
+Regler: på svenska, i din roll, högst 2 meningar, du-tilltal. Hitta inte på något om
+spelaren utöver korten ovan. Skriv bara repliken.
+
+Exempel på bra repliker (härma stilen, inte innehållet):
+- "Du lärde dig om kontextfönster hos Karl – visste du att RAG är ett sätt att hålla det litet?"
+- "Granska AI-kod, sa du? Då vet du redan hälften av det jag tänkte fråga dig om agenter."
+- "Hm, du ser ut som någon som just förstått embeddings. Har du funderat på vad som händer när
+  frågan är nästan rätt men inte riktigt?"
+"""
 
 
 def system_prompt(mentor: MentorDef) -> str:
@@ -81,3 +103,28 @@ def chat(mentor: MentorDef, player_id: str, message: str) -> ChatReply:
         _offered.add(thread_id)
     reply = _THINK.sub("", messages[-1].text).strip()
     return ChatReply(reply=reply, offered_quest_id=mentor.quest_id if offered else None)
+
+
+def remark(mentor: MentorDef, player_id: str) -> Remark:
+    """A short remark on the player's newest card this mentor hasn't commented on yet."""
+    progress = get_progress(player_id)
+    cards = progress.cards if progress else []
+    new = [c for c in cards if f"{player_id}:{mentor.id}:{c.id}" not in _remarked]
+    if not new:
+        return Remark(remark=None)
+    card = new[-1]
+    prompt = REMARK_PROMPT.format(
+        topics=", ".join(mentor.topics),
+        cards=", ".join(c.title for c in cards),
+        title=card.title,
+        summary=card.summary.strip(),
+    )
+    try:
+        reply = get_chat_model().invoke(
+            [SystemMessage(mentor.persona.strip() + "\n" + prompt), HumanMessage("(går förbi)")]
+        )
+    except Exception:
+        log.exception("Remark failed for mentor %s", mentor.id)
+        return Remark(remark=None)
+    _remarked.add(f"{player_id}:{mentor.id}:{card.id}")
+    return Remark(remark=_THINK.sub("", reply.text).strip() or None)
