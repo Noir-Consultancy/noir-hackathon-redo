@@ -68,7 +68,11 @@ export class WorldScene extends Phaser.Scene {
   async create(): Promise<void> {
     const keyboard = this.input.keyboard as Phaser.Input.Keyboard.KeyboardPlugin;
     this.cursors = keyboard.createCursorKeys();
-    keyboard.on("keydown-E", () => this.interact());
+    keyboard.on("keydown-E", (e: KeyboardEvent) => {
+      // The dialog focuses its input during this keydown; without this the "e" lands in it.
+      e.preventDefault();
+      this.interact();
+    });
 
     this.ui.onChange(() => {
       const wasActive = this.active;
