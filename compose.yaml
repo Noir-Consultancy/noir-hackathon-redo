@@ -27,7 +27,7 @@ services:
       postgres:
         condition: service_healthy
 
-  # PostgreSQL 18 with pgvector.
+  # PostgreSQL 18 with pgvector (not used yet; ready for a real RAG extension).
   postgres:
     image: docker.io/pgvector/pgvector:pg18
     ports:
