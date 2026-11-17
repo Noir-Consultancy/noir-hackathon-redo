@@ -1,7 +1,6 @@
-// Controls hint (owner: package 2): shown when play starts, folds into a small button.
+// Controls hint (owner: package 2): a small "? Kontroller" button that unfolds the keys.
 import { el } from "./dom";
 
-const COLLAPSE_MS = 30_000;
 const CONTROLS = "Piltangenter: gå · E: prata · C: codex · Esc: stäng";
 
 export function createControls(): { root: HTMLElement; show: () => void } {
@@ -20,12 +19,10 @@ export function createControls(): { root: HTMLElement; show: () => void } {
     toggle.blur(); // keep Space/Enter for the game, not this button
   });
 
-  // Show once the player is in the game, then fold away after a while.
+  // Show the folded button once the player is in the game.
   const show = () => {
-    if (!root.hidden) return;
     root.hidden = false;
-    setOpen(true);
-    setTimeout(() => setOpen(false), COLLAPSE_MS);
+    setOpen(false);
   };
 
   return { root, show };
