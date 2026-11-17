@@ -37,3 +37,24 @@
     Godkänt om svaret väljer wikin för RAG (hämta relevanta textstycken som kontext) och
     förklarar att fakturering är beräkning/strukturerad data som passar bättre med
     SQL eller verktygsanrop än RAG.
+- id: q-oracle-1
+  mentor_id: orakelbotten
+  title: Fånga orakelns hallucinationer
+  task: >
+    Orakelbotten håller en föreläsning, men några av påståendena är fel. Kryssa i de
+    påståenden som är fel och förklara varför de är fel.
+  kind: boss
+  xp: 150
+  card_id: c-review-ai-answers
+  statements:
+    - Kontextfönstret är begränsat, så i långa sessioner kan tidiga instruktioner tappa genomslag.
+    - Sätter du temperaturen till 0 kan modellen inte hallucinera, eftersom svaren då alltid blir faktamässigt korrekta.
+    - Embeddings placerar texter med liknande betydelse nära varandra, så vektorsök kan hitta rätt stycke även när orden skiljer sig.
+    - Med RAG tränas modellen om på era dokument, så kunskapen finns kvar i modellens vikter efter svaret.
+    - När en kodagent har ändrat kod bör du granska diffen och köra testerna innan du committar, precis som med en kollegas PR.
+  wrong_statements: [1, 3] # 0-based: statements 2 and 4
+  criteria: >
+    Godkänt om motiveringen förklarar båda felen. Påstående 2: temperatur 0 gör svaren
+    mer deterministiska/förutsägbara, inte sanna – modellen kan fortfarande hallucinera.
+    Påstående 4: RAG tränar inte om modellen och ändrar inte vikterna, utan hämtar
+    relevanta textstycken som läggs i kontexten när frågan ställs.

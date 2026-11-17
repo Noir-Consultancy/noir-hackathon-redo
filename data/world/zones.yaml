@@ -12,6 +12,11 @@
 - id: rag-biblioteket
   name: RAG-biblioteket
   topic: Embeddings, vektorsök och RAG
-  bounds: { x: 0, y: 15, w: 40, h: 15 }
+  bounds: { x: 0, y: 15, w: 20, h: 15 }
   color: "#d4a373"
   required_level: 2 # opens after two quests (100 XP)
+- id: orakelns-arena
+  name: Orakelns arena
+  topic: Granska AI-svar (bossfight)
+  bounds: { x: 20, y: 15, w: 20, h: 15 }
+  color: "#9b2226"
