@@ -3,6 +3,7 @@ import { chat, createPlayer, getProgress, getWorld } from "../api/client";
 import type { Progress, World } from "../api/types";
 import { bus } from "../events";
 import { codexPanel } from "./codex";
+import { createControls } from "./controls";
 import { el } from "./dom";
 import { createHud, rewardEvents } from "./hud";
 import { createNotifier } from "./notify";
@@ -15,6 +16,8 @@ export function startUi(root: HTMLElement): void {
   const hud = createHud();
   root.append(hud.root);
   const notify = createNotifier(root);
+  const controls = createControls();
+  root.append(controls.root);
 
   let playerId = "";
   let progress: Progress | null = null;
@@ -43,6 +46,7 @@ export function startUi(root: HTMLElement): void {
       // Storage unavailable: the player just enters the name again next time.
     }
     renderHud(p);
+    controls.show();
     bus.emit("player:ready", { playerId });
   };
 

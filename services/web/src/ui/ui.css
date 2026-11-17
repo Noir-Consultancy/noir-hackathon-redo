@@ -387,3 +387,39 @@ body {
   margin: 0;
   opacity: 0.7;
 }
+
+.controls {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.controls[hidden] {
+  display: none;
+}
+
+.controls.collapsed {
+  padding: 0;
+  background: none;
+}
+
+.controls.collapsed .controls-text {
+  display: none;
+}
+
+.controls-toggle {
+  font: inherit;
+  padding: 2px 8px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+}

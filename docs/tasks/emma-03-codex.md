@@ -21,6 +21,7 @@ ser vad som återstår att upptäcka.
 - `services/web/src/ui/codex.ts` – vyn och en ren funktion `codexCards(world, progress)`.
 - `services/web/src/ui/codex.test.ts` – test för `codexCards`.
 - `services/web/src/ui/index.ts` – tangenten `C` och modal-hantering.
+- `services/web/src/ui/controls.ts` – kontrollrad som fälls ihop till "? Kontroller" efter 30 s.
 - `services/web/src/ui/ui.css` – stilar.
 
 ## Kontrakt
