@@ -4,11 +4,12 @@ Instructions for coding agents (Claude Code, Codex, etc.) working in this reposi
 
 ## Context
 
-This repository is Kunskapsriket, a team project built by four people during the
-hackathon at NOIR's autumn conference 2026, in about two hours of development time,
-using coding agents throughout. See the Project section below.
+This repository is Kunskapsriket, a team project by four people. It was started at the
+hackathon at NOIR's autumn conference 2026 and is now developed further in team sessions,
+using coding agents throughout. The MVP is done. See the Project section below.
 
-- Conference material (Swedish) lives in `konferens/`. Read it for context; do not modify it.
+- Background material from the conference (Swedish) lives in `konferens/`. Read it for
+  context; do not modify it.
 - World content (zones, mentors, quests, cards, achievements) lives in `data/world/`.
 
 ## Team rules
@@ -18,8 +19,8 @@ draft a proposal (e.g. a small PR to `AGENTS.md`) instead of changing it.
 
 ### Scope, packages and contract
 
-- **Time-boxed.** Prefer the simplest thing that works. Avoid gold-plating, premature
-  abstractions and large refactors.
+- **Keep it simple.** Prefer the simplest thing that works. Avoid gold-plating and
+  premature abstractions; propose large refactors before starting them.
 - **Own package.** Each member owns specific services or modules (see `docs/plan.md`).
   Edit only your own package. For a change elsewhere, ask its owner. Stub what you
   depend on instead of waiting. Shared files (`compose.yaml`, `.env.example`, `docs/`)
@@ -80,7 +81,8 @@ adding it.
   Prefer merge over rebase, so conflicts are resolved once and no force-push is needed.
 - Never rewrite history on or force-push to `main`.
 - Keep PRs small: one task per PR. Suggest opening one (see the `create-pr` skill) when
-  a task is done. PRs are merged with a regular merge commit (not squash).
+  a task is done. PRs are squash-merged (the only option on GitHub), and merged branches
+  are deleted automatically.
 - Start the next task on a new branch from an updated `main`, or from the previous task
   branch if its PR isn't merged yet and you need its changes (say so in the PR, and
   merge `origin/main` once it is).
