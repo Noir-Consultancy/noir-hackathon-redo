@@ -96,6 +96,14 @@ class ChatReply(BaseModel):
     offered_quest_id: str | None
 
 
+class RemarkRequest(BaseModel):
+    player_id: str
+
+
+class Remark(BaseModel):
+    remark: str | None
+
+
 class AttemptRequest(BaseModel):
     player_id: str
     answer: str = Field(min_length=1, max_length=4000)

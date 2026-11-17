@@ -1,5 +1,5 @@
 // API client (owner: package 2). Calls go to /api, proxied to the api service.
-import type { AttemptResult, ChatReply, Progress, World } from "./types";
+import type { AttemptResult, ChatReply, Progress, Remark, World } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -23,6 +23,9 @@ export const getProgress = (playerId: string) => request<Progress>(`/players/${p
 
 export const chat = (npcId: string, playerId: string, message: string) =>
   post<ChatReply>(`/npcs/${npcId}/chat`, { player_id: playerId, message });
+
+export const getRemark = (npcId: string, playerId: string) =>
+  post<Remark>(`/npcs/${npcId}/remark`, { player_id: playerId });
 
 export const attemptQuest = (questId: string, playerId: string, answer: string) =>
   post<AttemptResult>(`/quests/${questId}/attempt`, { player_id: playerId, answer });

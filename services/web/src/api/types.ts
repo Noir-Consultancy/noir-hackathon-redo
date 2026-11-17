@@ -80,6 +80,10 @@ export interface ChatReply {
   offered_quest_id: string | null;
 }
 
+export interface Remark {
+  remark: string | null;
+}
+
 export interface AttemptResult {
   passed: boolean;
   feedback: string;
