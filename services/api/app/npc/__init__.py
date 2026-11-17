@@ -2,30 +2,33 @@
 
 import re
 
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
 from app.llm import get_chat_model
 from app.models import ChatReply
-from app.npc.tools import TOOLS, quest_done
+from app.npc.tools import TOOLS, offer_quest, quest_done
 from app.world import MentorDef
 
 RULES = """
 Regler:
-- Svara alltid på svenska, kort (högst 3–4 meningar) och i din roll.
+- Svara alltid på svenska, högst 3 meningar och i din roll.
 - Håll dig till dina ämnen: {topics}. Leds samtalet bort, styr vänligt tillbaka.
 - Spelaren är en erfaren utvecklare: inga nybörjarförklaringar av programmering.
-- Hitta inte på fakta. Är du osäker, säg det.
-- Använd offer_quest när spelaren visat intresse och ni pratat en stund. Använd
-  get_player_progress för att anpassa dig efter vad spelaren redan kan, och lookup_card
-  för att hänvisa till kort spelaren har.
+- Hitta inte på något, varken fakta eller saker om spelaren. Det du vet om spelaren
+  kommer från get_player_progress. Är du osäker, säg det.
+- Ber spelaren om en utmaning eller quest, anropa offer_quest. Använd lookup_card för
+  att hänvisa till kort spelaren har.
 """
 
 # Offer the quest anyway after this many player messages, if the model hasn't.
 FALLBACK_AFTER = 3
 
 _THINK = re.compile(r"<think>.*?</think>", re.DOTALL)
+
+# The player asks for the quest: offer it directly instead of relying on the model.
+_ASKS_FOR_QUEST = re.compile(r"\b(quest|utmaning|uppdrag)", re.IGNORECASE)
 
 # Session memory: lost on restart. Threads are keyed by player and mentor.
 _checkpointer = InMemorySaver()
@@ -56,13 +59,22 @@ def chat(mentor: MentorDef, player_id: str, message: str) -> ChatReply:
         "configurable": {"thread_id": thread_id, "player_id": player_id, "mentor_id": mentor.id}
     }
     agent = _agent(mentor)
+    can_offer = thread_id not in _offered and not quest_done(player_id, mentor.quest_id)
+    if can_offer and _ASKS_FOR_QUEST.search(message):
+        reply, _ = offer_quest.func(config)
+        # Keep the exchange in the thread's memory so the conversation stays coherent.
+        agent.update_state(
+            config, {"messages": [HumanMessage(message), AIMessage(reply)]}, as_node="agent"
+        )
+        _offered.add(thread_id)
+        return ChatReply(reply=reply, offered_quest_id=mentor.quest_id)
     before = len(agent.get_state(config).values.get("messages", []))
     messages = agent.invoke({"messages": [("user", message)]}, config)["messages"]
     offered = any(
         isinstance(m, ToolMessage) and m.name == "offer_quest" and m.artifact
         for m in messages[before:]
     )
-    if not offered and thread_id not in _offered and not quest_done(player_id, mentor.quest_id):
+    if not offered and can_offer:
         offered = sum(isinstance(m, HumanMessage) for m in messages) >= FALLBACK_AFTER
     if offered:
         _offered.add(thread_id)

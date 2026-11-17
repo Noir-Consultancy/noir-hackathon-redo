@@ -80,3 +80,39 @@ def test_lookup_card_only_unlocked():
     _complete(pid, "q-ada-1")
     assert lookup_card.func("granska kod", _config(pid)).startswith("Granska AI-genererad kod:")
     assert lookup_card.func("fotboll", _config(pid)) == "Inget kort."
+
+
+def test_asking_for_quest_offers_it_without_llm(fake_llm):
+    ada = get_mentor("ada")
+    pid = _player("asks")
+    reply = npc.chat(ada, pid, "Har du någon utmaning åt mig?")
+    assert reply.offered_quest_id == "q-ada-1"
+    assert reply.reply == 'Då har jag en utmaning åt dig: "Granska agentens kod". Lycka till!'
+    assert fake_llm.seen == []
+    # The exchange is in the thread's memory: the next reply sees two user messages.
+    assert npc.chat(ada, pid, "Tack").reply.startswith("svar 2")
+
+
+def test_quest_keywords_match_inflections():
+    ada = get_mentor("ada")
+    for i, message in enumerate(["Finns det ett uppdrag?", "Ge mig utmaningen", "QUEST!"]):
+        assert npc.chat(ada, _player(f"kw-{i}"), message).offered_quest_id == "q-ada-1"
+
+
+def test_other_words_do_not_offer_quest():
+    ada = get_mentor("ada")
+    for i, message in enumerate(["Jag har en uppgift på jobbet", "Vilket drag!"]):
+        assert npc.chat(ada, _player(f"no-kw-{i}"), message).offered_quest_id is None
+
+
+def test_asking_again_does_not_offer_quest_twice():
+    ada = get_mentor("ada")
+    pid = _player("twice")
+    assert npc.chat(ada, pid, "Har du en utmaning?").offered_quest_id == "q-ada-1"
+    assert npc.chat(ada, pid, "En utmaning till?").offered_quest_id is None
+
+
+def test_asking_after_quest_is_done_does_not_offer_it():
+    pid = _player("asks-done")
+    _complete(pid, "q-ada-1")
+    assert npc.chat(get_mentor("ada"), pid, "Har du en utmaning?").offered_quest_id is None
