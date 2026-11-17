@@ -12,6 +12,13 @@ import { deviceSaves, type Save } from "./saves";
 
 const SLOW_MS = 10_000;
 
+/** Disables every button and input in `node` while a request is pending. */
+function setBusy(node: HTMLElement, busy: boolean): void {
+  for (const c of node.querySelectorAll<HTMLButtonElement | HTMLInputElement>("button, input")) {
+    c.disabled = busy;
+  }
+}
+
 export function startUi(root: HTMLElement): void {
   const saves = deviceSaves();
   // Back to the start menu: reloading also resets the game world for the next player.
@@ -84,11 +91,14 @@ export function startUi(root: HTMLElement): void {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       error.textContent = "";
+      // Lock the form, incl. "Tillbaka", so the menu can't open while the player is created.
+      setBusy(form, true);
       try {
         ready(await createPlayer(input.value.trim()));
         form.remove();
       } catch {
         error.textContent = "Kunde inte nå servern. Försök igen om en stund.";
+        setBusy(form, false);
       }
     });
     root.append(form);
@@ -205,16 +215,21 @@ export function startUi(root: HTMLElement): void {
   /** Start menu: continue one of this device's saves, or start a new game. */
   const showMenu = (entries: { save: Save; progress: Progress | null }[]) => {
     const list = el("div", { className: "menu-saves" });
+    const error = el("p", { className: "error" });
     const panel = el("div", { className: "panel menu" }, el("h2", {}, "Kunskapsriket"), list);
     for (const { save, progress: p } of entries) {
       const label = p ? `Fortsätt som ${p.name} · nivå ${p.level}` : `Fortsätt som ${save.name}`;
       const pick = el("button", { type: "button" }, label);
       pick.addEventListener("click", async () => {
+        error.textContent = "";
+        setBusy(panel, true);
         try {
-          ready(p ?? (await getProgress(save.player_id)));
+          // Fresh progress: the menu's copy may be old (e.g. played in another tab since).
+          ready(await getProgress(save.player_id));
           panel.remove();
         } catch {
-          pick.textContent = `${save.name}: kunde inte nå servern, försök igen`;
+          error.textContent = `Kunde inte hämta ${save.name}. Försök igen om en stund.`;
+          setBusy(panel, false);
         }
       });
       list.append(pick);
@@ -224,7 +239,7 @@ export function startUi(root: HTMLElement): void {
       panel.remove();
       askName(() => showMenu(entries));
     });
-    panel.append(newGame);
+    panel.append(newGame, error);
     root.append(panel);
     (list.firstElementChild as HTMLElement | null)?.focus();
   };
