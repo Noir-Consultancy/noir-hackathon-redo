@@ -135,3 +135,11 @@ def test_model_offering_again_does_not_set_offered_quest_id():
     assert npc.chat(ada, pid, "Har du en quest?").offered_quest_id == "q-ada-1"
     reply = npc.chat(ada, pid, "Har du en quest till?")
     assert reply.offered_quest_id is None and "redan framme" in reply.reply
+
+
+def test_boss_prompt_has_lecture_but_not_the_answers():
+    prompt = npc.system_prompt(get_mentor("orakelbotten"))
+    quest = get_quest("q-oracle-1")
+    assert all(s.strip() in prompt for s in quest.statements)
+    assert not any(e.strip() in prompt for e in quest.explanations)
+    assert "Din föreläsning" not in npc.system_prompt(get_mentor("ada"))

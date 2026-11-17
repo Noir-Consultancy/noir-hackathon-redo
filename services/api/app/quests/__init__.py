@@ -37,29 +37,30 @@ Om svaret är godkänt: säg vad som var bra. Om inte: ge en ledtråd om vad som
 utan att avslöja kriterierna eller ge hela svaret."""
 
 
-def check_statements(quest: QuestDef, selected: list[int]) -> str | None:
-    """Boss quests: a hint if the player marked the wrong statements, else None."""
-    chosen, wrong = set(selected), set(quest.wrong_statements)
-    if chosen - wrong:
-        return "Något du kryssade i stämmer faktiskt. Granska påståendena igen."
-    if wrong - chosen:
-        return "Orakelbotten skrattar: du har inte hittat alla fel ännu."
-    return None
+BOSS_FAILED = "Orakelbotten skrattar: inte riktigt. Granska påståendena igen."
+BOSS_PASSED = "Rätt! Du fångade orakelns hallucinationer."
 
 
-def _numbered(statements: list[str]) -> str:
-    return "\n".join(f"{i + 1}. {s.strip()}" for i, s in enumerate(statements))
+def judge_boss(quest: QuestDef, selected: list[int]) -> Judgement:
+    """Boss quests: passed if exactly the wrong statements are marked, without the LLM.
+
+    A failure gives the same hint whatever was wrong, so single marks can't be probed.
+    A pass explains every statement.
+    """
+    if set(selected) != set(quest.wrong_statements):
+        return Judgement(passed=False, feedback=BOSS_FAILED)
+    lines = [
+        f"{i + 1}. {'Fel' if i in quest.wrong_statements else 'Stämmer'}: {text.strip()}"
+        for i, text in enumerate(quest.explanations)
+    ]
+    return Judgement(passed=True, feedback="\n\n".join([BOSS_PASSED, *lines]))
 
 
 def build_messages(quest: QuestDef, answer: str) -> list[Any]:
-    task, criteria = quest.task.strip(), quest.criteria.strip()
-    if quest.statements:
-        wrong = ", ".join(str(i + 1) for i in sorted(quest.wrong_statements))
-        task += "\n\nPåståenden:\n" + _numbered(quest.statements)
-        criteria += f"\n\nSpelaren har redan pekat ut rätt felaktiga påståenden ({wrong})."
-        criteria += " Bedöm bara motiveringen."
     return [
-        SystemMessage(SYSTEM_PROMPT.format(task=task, criteria=criteria)),
+        SystemMessage(
+            SYSTEM_PROMPT.format(task=quest.task.strip(), criteria=quest.criteria.strip())
+        ),
         HumanMessage(answer),
     ]
 

@@ -16,11 +16,12 @@ def attempt(quest_id: str, body: AttemptRequest) -> AttemptResult:
     if current is None:
         raise HTTPException(404, f"Unknown player: {body.player_id}")
 
+    if quest.kind != "boss" and not body.answer.strip():
+        raise HTTPException(422, "answer is required for this quest")
+
     try:
-        # Boss quests: the marked statements are checked without the LLM.
-        hint = quests.check_statements(quest, body.selected_statements)
-        if quest.kind == "boss" and hint:
-            judgement = quests.Judgement(passed=False, feedback=hint)
+        if quest.kind == "boss":
+            judgement = quests.judge_boss(quest, body.selected_statements)
         else:
             judgement = quests.judge(quest, body.answer)
     except quests.JudgeUnavailable as err:
