@@ -31,6 +31,7 @@ const WANDER_SPEED = 40;
 const REST_MS = [2000, 5000]; // pause between walks
 const THINKING_DELAY = 300; // show "…" only if the remark takes longer than this
 const LINGER_MS = 3000; // a remark stays this long after the player walks away
+const REMARK_COOLDOWN_MS = 30000; // per mentor, so pacing at the edge of the range is cheap
 const HUD_HEIGHT = TILE * 2.5; // the HUD covers the top of the screen; bubbles stay below it
 const BUBBLE_MARGIN = 8;
 const LOCK_HINT_MS = 1500;
@@ -52,6 +53,7 @@ interface MentorSprite {
   remark: "idle" | "loading" | "showing";
   remarkId: number; // bumped to discard a pending remark
   hideAt: number; // scene time when a showing remark disappears
+  nextRemarkAt: number; // scene time when the mentor may remark again
 }
 
 /** The world: a tile map generated from /world, sprite characters, arrow keys and E. */
@@ -217,6 +219,7 @@ export class WorldScene extends Phaser.Scene {
         remark: "idle",
         remarkId: 0,
         hideAt: 0,
+        nextRemarkAt: 0,
       });
     }
 
@@ -379,14 +382,17 @@ export class WorldScene extends Phaser.Scene {
     m.bubble.setX(Phaser.Math.Clamp(m.pos.x, view.x + half, view.right - half) - m.pos.x);
   }
 
-  /** A mentor remarks on something when the player walks up to it, once per approach. */
+  /** A mentor remarks on something when the player walks up to it, at most every 30 s. */
   private checkRemarks(): void {
     const playerId = this.ui.playerId;
     if (!this.active || !playerId) return;
     for (const m of this.mentors) {
       const near =
         Phaser.Math.Distance.Between(m.pos.x, m.pos.y, this.player.x, this.player.y) < REMARK_RANGE;
-      if (near && !m.near && m.remark === "idle") void this.remark(m, playerId);
+      if (near && !m.near && m.remark === "idle" && this.time.now >= m.nextRemarkAt) {
+        m.nextRemarkAt = this.time.now + REMARK_COOLDOWN_MS;
+        void this.remark(m, playerId);
+      }
       m.near = near;
     }
   }
@@ -394,7 +400,7 @@ export class WorldScene extends Phaser.Scene {
   /**
    * "…" while the remark loads, then the remark. If the player has already walked away it
    * still shows, for a short reading time. A remark that arrives while a dialog is open
-   * shows when it closes (the server has already used up the card).
+   * shows when it closes.
    */
   private async remark(m: MentorSprite, playerId: string): Promise<void> {
     const id = ++m.remarkId;
