@@ -21,6 +21,11 @@ svarar kort, i roll och utan påhittade påståenden.
   något om spelaren heller (det kommer från `get_player_progress`). Kalla `offer_quest`
   när spelaren ber om en utmaning. "Håll dig till dina ämnen" finns redan och fungerade
   i testet, så den behålls.
+- `offer_quest` erbjuder bara en gång per tråd (styrs i koden, inte av modellen), och
+  regeln säger "aldrig i ditt första svar".
+- Standardmodell `qwen3.5:9b` med `LLM_REASONING_EFFORT=none` i `.env.example`,
+  `config.py` och api-README (delade filer, egen commit). En större modell, t.ex.
+  `qwen3.6:27b` eller en molnmodell, rekommenderas för att spela på riktigt.
 - `data/world/mentors.yaml`: ledtråd i varje `greeting`, och personas utan egen
   "Svara kort" (står i `RULES`).
 
@@ -34,5 +39,5 @@ Inga ändringar.
 ## Test
 - Enhetstester med falsk modell: ordet ger questen utan LLM-anrop och sparas i minnet,
   inte om den redan erbjudits eller är klarad, ord som "uppgift" eller "drag" ger inget.
-- Manuellt med `qwen3.5:9b`: samma tre frågor till alla tre mentorer som tidigare,
-  jämför svarslängd och när questen erbjuds.
+- Manuellt (gjort) med `qwen3.5:9b` och `qwen3.6:27b`: tre samtal per mentor. Båda följer
+  flödet; 27b erbjuder questen själv oftare, 9b förlitar sig mer på ord och reserv.
