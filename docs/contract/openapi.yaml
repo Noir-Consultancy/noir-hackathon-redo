@@ -119,8 +119,8 @@ paths:
     post:
       summary: A short unprompted remark from a mentor the player walks up to (package 3)
       description: >
-        The mentor comments once on each card the player has that it hasn't commented on
-        yet. Without a new card, or if the LLM fails, remark is null.
+        Generates a new remark on every call, based on the player's cards and the mentor's
+        topics. The game limits how often it asks. remark is null if the LLM fails.
       parameters:
         - { name: npc_id, in: path, required: true, schema: { type: string }, example: vera }
       requestBody:
@@ -135,7 +135,7 @@ paths:
             example: { player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10 }
       responses:
         "200":
-          description: The remark, or null if the mentor has nothing new to say
+          description: The remark, or null if the LLM failed
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Remark" }
