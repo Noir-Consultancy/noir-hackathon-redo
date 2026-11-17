@@ -1,5 +1,5 @@
 // HUD panel (owner: package 2): level badge, XP bar and card/badge counters.
-import type { Progress } from "../api/types";
+import type { Progress, Zone } from "../api/types";
 import { el } from "./dom";
 
 export interface RewardEvent {
@@ -7,8 +7,8 @@ export interface RewardEvent {
   text: string;
 }
 
-/** What the player gained between two progress snapshots. */
-export function rewardEvents(prev: Progress, next: Progress): RewardEvent[] {
+/** What the player gained between two progress snapshots, incl. zones a level up opens. */
+export function rewardEvents(prev: Progress, next: Progress, zones: Zone[] = []): RewardEvent[] {
   const events: RewardEvent[] = [];
   const hadCard = new Set(prev.cards.map((c) => c.id));
   for (const c of next.cards) {
@@ -18,7 +18,13 @@ export function rewardEvents(prev: Progress, next: Progress): RewardEvent[] {
   for (const a of next.achievements) {
     if (!hadBadge.has(a.id)) events.push({ kind: "achievement", text: `🏅 ${a.title}` });
   }
-  if (next.level > prev.level) events.push({ kind: "level", text: `⬆ Nivå ${next.level}!` });
+  if (next.level > prev.level) {
+    const opened = zones.filter(
+      (z) => z.required_level > prev.level && z.required_level <= next.level,
+    );
+    const lines = [`⬆ Nivå ${next.level}!`, ...opened.map((z) => `🔓 ${z.name} är upplåst!`)];
+    events.push({ kind: "level", text: lines.join("\n") });
+  }
   return events;
 }
 

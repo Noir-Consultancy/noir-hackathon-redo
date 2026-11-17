@@ -10,7 +10,7 @@ API-schemana finns i [openapi.yaml](openapi.yaml). Här är fälten och reglerna
 
 | Modell | Fält | Exempel |
 |---|---|---|
-| **Zone** | `id`, `name`, `topic`, `bounds {x, y, w, h}`, `color` (hex) | `{"id": "agentbyn", "name": "Agentbyn", "topic": "Kodagenter", "bounds": {"x": 0, "y": 0, "w": 20, "h": 15}, "color": "#7fb069"}` |
+| **Zone** | `id`, `name`, `topic`, `bounds {x, y, w, h}`, `color` (hex), `required_level` (nivå som krävs för att gå in, standard 1) | `{"id": "agentbyn", "name": "Agentbyn", "topic": "Kodagenter", "bounds": {"x": 0, "y": 0, "w": 20, "h": 15}, "color": "#7fb069", "required_level": 1}` |
 | **Mentor** | `id`, `name`, `title`, `zone_id`, `position {x, y}`, `color`, `quest_id` | `{"id": "ada", "name": "Ada", "title": "Kodagentveteranen", "zone_id": "agentbyn", "position": {"x": 8, "y": 6}, "color": "#e07a5f", "quest_id": "q-ada-1"}` |
 | **Quest** | `id`, `mentor_id`, `title`, `task`, `kind` (`explain` \| `solve` \| `choose`), `xp`, `card_id` | `{"id": "q-ada-1", "mentor_id": "ada", "title": "Granska agentens kod", "task": "Förklara tre saker du alltid kollar…", "kind": "explain", "xp": 50, "card_id": "c-review-ai-code"}` |
 | **CardSummary** | `id`, `title`, `mentor_id` | `{"id": "c-review-ai-code", "title": "Granska AI-genererad kod", "mentor_id": "ada"}` |

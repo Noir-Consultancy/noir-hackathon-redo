@@ -44,6 +44,22 @@ describe("rewardEvents", () => {
     expect(rewardEvents(start, next)).toEqual([{ kind: "level", text: "⬆ Nivå 2!" }]);
   });
 
+  it("lists zones the level up unlocks in the level banner", () => {
+    const next: Progress = { ...start, xp: 100, level: 2, xp_for_next_level: 200 };
+    const zone = (name: string, required_level: number) => ({
+      id: name,
+      name,
+      topic: "",
+      bounds: { x: 0, y: 0, w: 1, h: 1 },
+      color: "#000",
+      required_level,
+    });
+    const zones = [zone("Agentbyn", 1), zone("RAG-biblioteket", 2), zone("Senare", 3)];
+    expect(rewardEvents(start, next, zones)).toEqual([
+      { kind: "level", text: "⬆ Nivå 2!\n🔓 RAG-biblioteket är upplåst!" },
+    ]);
+  });
+
   it("reports nothing when progress is unchanged", () => {
     expect(rewardEvents(start, { ...start })).toEqual([]);
   });

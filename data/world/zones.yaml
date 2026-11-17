@@ -1,4 +1,4 @@
-# Zones on a 40x30 tile map (1 tile = 32 px). Owner: package 3.
+# Zones on a 40x30 tile map (1 tile = 32 px). required_level defaults to 1 (open).
 - id: agentbyn
   name: Agentbyn
   topic: Kodagenter i vardagen
@@ -14,3 +14,4 @@
   topic: Embeddings, vektorsök och RAG
   bounds: { x: 0, y: 15, w: 40, h: 15 }
   color: "#d4a373"
+  required_level: 2 # opens after two quests (100 XP)

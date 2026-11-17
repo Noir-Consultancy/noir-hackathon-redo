@@ -23,17 +23,25 @@ export function startUi(root: HTMLElement): void {
   let progress: Progress | null = null;
   let modalOpen = false; // the mentor dialog is open
   let world: Promise<World> | null = null;
+  let zones: World["zones"] = []; // for "🔓 … är upplåst!" on level up
   const loadWorld = () => {
-    world ??= getWorld().catch((err) => {
-      world = null;
-      throw err;
-    });
+    world ??= getWorld().then(
+      (w) => {
+        zones = w.zones;
+        return w;
+      },
+      (err) => {
+        world = null;
+        throw err;
+      },
+    );
     return world;
   };
+  void loadWorld().catch(() => undefined);
 
   const renderHud = (p: Progress) => {
     // No notifications on the first load, only for what is gained while playing.
-    if (progress?.player_id === p.player_id) notify(rewardEvents(progress, p));
+    if (progress?.player_id === p.player_id) notify(rewardEvents(progress, p, zones));
     progress = p;
     hud.render(p);
   };

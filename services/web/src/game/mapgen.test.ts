@@ -10,6 +10,7 @@ const zone = (id: string, x: number, y: number, w: number, h: number): Zone => (
   topic: "",
   bounds: { x, y, w, h },
   color: "#000",
+  required_level: 1,
 });
 const mentor = (id: string, x: number, y: number): Mentor => ({
   id,
@@ -53,6 +54,10 @@ describe("buildMap", () => {
     expect(map.walls[3][19]).not.toBe(EMPTY); // between a and b
     expect(map.walls[14][3]).not.toBe(EMPTY); // between a and c
     expect(map.doors.length).toBe(3 * 3); // a|b, a|c, b|c, three tiles each
+    expect(map.doorZones.length).toBe(map.doors.length);
+    expect(new Set(map.doorZones.map((z) => [...z].sort().join("|")))).toEqual(
+      new Set(["0|1", "0|2", "1|2"]),
+    );
     for (const d of map.doors) expect(map.walls[d.y][d.x]).toBe(EMPTY);
   });
 

@@ -23,6 +23,7 @@ class Zone(BaseModel):
     topic: str
     bounds: Rect
     color: str
+    required_level: int = 1  # the player's level needed to enter the zone
 
 
 class Mentor(BaseModel):
