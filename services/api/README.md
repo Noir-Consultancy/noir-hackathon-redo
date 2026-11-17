@@ -33,5 +33,6 @@ uv run ruff format --check
 | `WORLD_DIR` | `<repo>/data/world` | Världsinnehållet (`/data/world` i containern) |
 | `DATABASE_URL` | `postgresql://app:app@localhost:5432/app` | Postgres för spelarframsteg |
 | `LLM_BASE_URL` | `http://localhost:11434/v1` | OpenAI-kompatibelt API |
-| `LLM_MODEL` | `qwen3.6:27b-coding-mxfp8` | Modellnamn |
+| `LLM_MODEL` | `qwen3.5:9b` | Modellnamn. Större modell (t.ex. `qwen3.6:27b`) för att spela på riktigt |
 | `LLM_API_KEY` | `ollama` | API-nyckel (godtycklig för Ollama) |
+| `LLM_REASONING_EFFORT` | (tom) | `none` stänger av tänkande i reasoning-modeller, mycket snabbare |
