@@ -23,3 +23,12 @@
     kontext till modellen. Bra för stora mängder ostrukturerad text.
   when_to_use: Frågor mot dokumentation, wikis, policyer och annan fritext.
   pitfalls: Att använda RAG för beräkningar eller exakt strukturerad data – där passar SQL eller verktyg bättre.
+- id: c-review-ai-answers
+  title: Granska AI-svar
+  mentor_id: orakelbotten
+  summary: >
+    Språkmodeller låter lika säkra när de har fel som när de har rätt. Granska påståenden
+    som du skulle granska en kollegas: kontrollera fakta mot källor, tester eller egen
+    kunskap, särskilt när svaret är detaljerat och övertygande.
+  when_to_use: När ett AI-svar ska ligga till grund för ett beslut, kod eller dokumentation.
+  pitfalls: Att ta självsäkerhet som tecken på korrekthet, eller tro att inställningar som temperatur 0 tar bort hallucinationer.

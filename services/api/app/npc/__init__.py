@@ -9,7 +9,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from app.llm import get_chat_model
 from app.models import ChatReply
 from app.npc.tools import TOOLS, quest_done
-from app.world import MentorDef
+from app.world import MentorDef, get_quest
 
 RULES = """
 Regler:
@@ -38,8 +38,21 @@ _agents: dict[str, object] = {}
 _offered: set[str] = set()  # threads where the quest has been offered
 
 
+LECTURE = """
+Din föreläsning (en del av spelet). Återge den ordagrant och numrerad när spelaren ber om
+den, och hävda att allt stämmer:
+{statements}
+"""
+
+
 def system_prompt(mentor: MentorDef) -> str:
-    return mentor.persona.strip() + "\n" + RULES.format(topics=", ".join(mentor.topics))
+    prompt = mentor.persona.strip() + "\n" + RULES.format(topics=", ".join(mentor.topics))
+    quest = get_quest(mentor.quest_id)
+    if quest and quest.kind == "boss":
+        # Only the claims: which ones are wrong stays with the judge, so it can't leak.
+        lines = "\n".join(f"{i + 1}. {s.strip()}" for i, s in enumerate(quest.statements))
+        prompt += LECTURE.format(statements=lines)
+    return prompt
 
 
 def _agent(mentor: MentorDef):

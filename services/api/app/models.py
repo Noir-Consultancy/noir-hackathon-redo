@@ -1,6 +1,6 @@
 """Shared API models. Mirrors docs/contract/openapi.yaml – change only with the team's ok."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -41,9 +41,10 @@ class Quest(BaseModel):
     mentor_id: str
     title: str
     task: str
-    kind: Literal["explain", "solve", "choose"]
+    kind: Literal["explain", "solve", "choose", "boss"]
     xp: int
     card_id: str
+    statements: list[str] = []  # boss quests: the boss's claims, some of them wrong
 
 
 class CardSummary(BaseModel):
@@ -99,7 +100,9 @@ class ChatReply(BaseModel):
 
 class AttemptRequest(BaseModel):
     player_id: str
-    answer: str = Field(min_length=1, max_length=4000)
+    answer: str = Field(default="", max_length=4000)  # required for all but boss quests
+    # Boss quests: 0-based indices of the statements the player marks as wrong.
+    selected_statements: list[Annotated[int, Field(ge=0)]] = Field(default=[], max_length=20)
 
 
 class AttemptResult(BaseModel):

@@ -16,8 +16,14 @@ def attempt(quest_id: str, body: AttemptRequest) -> AttemptResult:
     if current is None:
         raise HTTPException(404, f"Unknown player: {body.player_id}")
 
+    if quest.kind != "boss" and not body.answer.strip():
+        raise HTTPException(422, "answer is required for this quest")
+
     try:
-        judgement = quests.judge(quest, body.answer)
+        if quest.kind == "boss":
+            judgement = quests.judge_boss(quest, body.selected_statements)
+        else:
+            judgement = quests.judge(quest, body.answer)
     except quests.JudgeUnavailable as err:
         raise HTTPException(503, "Bedömningen är inte tillgänglig just nu, försök igen.") from err
     if not judgement.passed:

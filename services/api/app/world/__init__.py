@@ -19,7 +19,10 @@ class MentorDef(Mentor):
 
 
 class QuestDef(Quest):
-    criteria: str
+    criteria: str = ""  # used by the LLM judge; boss quests are judged without it
+    # Boss quests: 0-based indices of the wrong claims, and why each claim is right/wrong.
+    wrong_statements: list[int] = []
+    explanations: list[str] = []
 
 
 class AchievementDef(Achievement):

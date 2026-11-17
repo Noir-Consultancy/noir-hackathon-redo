@@ -24,5 +24,14 @@ export const getProgress = (playerId: string) => request<Progress>(`/players/${p
 export const chat = (npcId: string, playerId: string, message: string) =>
   post<ChatReply>(`/npcs/${npcId}/chat`, { player_id: playerId, message });
 
-export const attemptQuest = (questId: string, playerId: string, answer: string) =>
-  post<AttemptResult>(`/quests/${questId}/attempt`, { player_id: playerId, answer });
+export const attemptQuest = (
+  questId: string,
+  playerId: string,
+  answer: string,
+  selectedStatements: number[] = [],
+) =>
+  post<AttemptResult>(`/quests/${questId}/attempt`, {
+    player_id: playerId,
+    answer,
+    selected_statements: selectedStatements,
+  });

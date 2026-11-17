@@ -24,13 +24,22 @@ export function questBox(
     placeholder: "Ditt svar… (Enter skickar, Shift+Enter ny rad)",
     rows: 3,
   });
-  const submit = el("button", { type: "submit" }, "Skicka svar");
-  const form = el("form", { className: "quest-form" }, answer, submit);
+  // Boss quests: one checkbox per claim; the player marks the wrong ones, no free text.
+  const isBoss = quest.kind === "boss";
+  const submit = el("button", { type: "submit" }, isBoss ? "Avslöja felen" : "Skicka svar");
+  const checkboxes = quest.statements.map(() => el("input", { type: "checkbox" }));
+  const statements = el(
+    "ol",
+    { className: "quest-statements" },
+    ...quest.statements.map((s, i) => el("li", {}, el("label", {}, checkboxes[i], " ", s))),
+  );
+  const form = el("form", { className: "quest-form" }, ...(isBoss ? [] : [answer]), submit);
   const box = el(
     "section",
     { className: "quest" },
     el("h3", {}, quest.title, " ", status),
     el("p", { className: "quest-task" }, quest.task),
+    ...(isBoss ? [statements] : []),
     el("p", { className: "quest-xp" }, `${quest.xp} XP`),
     form,
     feedback,
@@ -40,6 +49,7 @@ export function questBox(
     box.classList.add("done");
     status.textContent = "Klarad ✓";
     form.remove();
+    for (const checkbox of checkboxes) checkbox.disabled = true;
   };
   if (completed) markCompleted();
 
@@ -54,14 +64,20 @@ export function questBox(
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const text = answer.value.trim();
-    if (!text) return;
+    const text = isBoss ? "" : answer.value.trim();
+    const selected = checkboxes.flatMap((checkbox, i) => (checkbox.checked ? [i] : []));
+    if (!isBoss && !text) return;
+    if (isBoss && selected.length === 0) {
+      feedback.className = "quest-feedback failed";
+      feedback.textContent = "Kryssa i de påståenden du tror är fel.";
+      return;
+    }
     submit.disabled = true;
     feedback.className = "quest-feedback";
-    feedback.textContent = "Bedömer ditt svar…";
+    feedback.textContent = isBoss ? "Orakelbotten granskar dina kryss…" : "Bedömer ditt svar…";
     let result: AttemptResult;
     try {
-      result = await attemptQuest(quest.id, playerId, text);
+      result = await attemptQuest(quest.id, playerId, text, selected);
     } catch {
       feedback.textContent = "Kunde inte skicka svaret. Försök igen.";
       feedback.classList.add("failed");
