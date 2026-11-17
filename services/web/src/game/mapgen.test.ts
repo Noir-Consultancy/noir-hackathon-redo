@@ -10,6 +10,7 @@ const zone = (id: string, x: number, y: number, w: number, h: number): Zone => (
   topic: "",
   bounds: { x, y, w, h },
   color: "#000",
+  required_level: 1,
 });
 const mentor = (id: string, x: number, y: number): Mentor => ({
   id,
