@@ -28,7 +28,8 @@ export function rewardEvents(prev: Progress, next: Progress, zones: Zone[] = [])
   return events;
 }
 
-export function createHud() {
+/** `onMenu` is called by the HUD's "Meny" button. */
+export function createHud(onMenu: () => void) {
   const level = el("div", { className: "hud-level" });
   const name = el("div", { className: "hud-name" });
   const fill = el("div", { className: "hud-xp-fill" });
@@ -36,7 +37,11 @@ export function createHud() {
   const cardCount = el("span");
   const badgeCount = el("span");
   const counts = el("div", { className: "hud-counts" }, cardCount, badgeCount);
-  const root = el(
+  // The menu button sits on its own in the top right corner, where games usually keep it.
+  const menu = el("button", { type: "button", className: "hud-menu" }, "☰ Meny");
+  menu.addEventListener("click", onMenu);
+  menu.hidden = true;
+  const panel = el(
     "div",
     { className: "hud" },
     level,
@@ -48,10 +53,14 @@ export function createHud() {
       counts,
     ),
   );
-  root.hidden = true;
+  panel.hidden = true;
+  // Toasts stack in the same top-right column, so they always end up below the button.
+  const topRight = el("div", { className: "top-right" }, menu);
+  const root = el("div", {}, panel, topRight);
 
   const render = (p: Progress) => {
-    root.hidden = false;
+    panel.hidden = false;
+    menu.hidden = false;
     level.replaceChildren(el("small", {}, "Nv"), String(p.level));
     name.textContent = p.name;
     // XP within the current level. The step comes from the server's xp_for_next_level
@@ -65,5 +74,5 @@ export function createHud() {
     badgeCount.textContent = `🏅 ${p.achievements.length}`;
   };
 
-  return { root, render };
+  return { root, topRight, render };
 }

@@ -41,10 +41,6 @@ body {
   border-radius: 8px;
 }
 
-.hud[hidden] {
-  display: none;
-}
-
 .hud-level {
   display: flex;
   flex-direction: column;
@@ -216,9 +212,6 @@ body {
 }
 
 .toasts {
-  position: absolute;
-  top: 12px;
-  right: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -448,4 +441,73 @@ body {
   border: 1px solid var(--accent);
   border-radius: 4px;
   cursor: pointer;
+}
+
+.panel-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.menu {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 32px));
+}
+
+.menu h2 {
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.menu-saves {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu button {
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+}
+
+.menu .menu-new {
+  margin-top: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.hud[hidden],
+.hud-menu[hidden] {
+  display: none;
+}
+
+.top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.hud-menu {
+  pointer-events: auto; /* the column itself lets clicks through to the game */
+  padding: 6px 14px;
+  font: inherit;
+  font-weight: bold;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.hud-menu:hover {
+  background: var(--accent);
+  color: var(--bg);
 }
