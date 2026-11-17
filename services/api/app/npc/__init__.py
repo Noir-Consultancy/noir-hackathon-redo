@@ -18,8 +18,9 @@ Regler:
 - Spelaren är en erfaren utvecklare: inga nybörjarförklaringar av programmering.
 - Hitta inte på något, varken fakta eller saker om spelaren. Det du vet om spelaren
   kommer från get_player_progress. Är du osäker, säg det.
-- Ber spelaren om en utmaning eller quest, anropa offer_quest. Använd lookup_card för
-  att hänvisa till kort spelaren har.
+- Anropa offer_quest när spelaren ber om en utmaning, eller när ni pratat en stund om
+  ditt ämne. Aldrig i ditt första svar. Använd lookup_card för att hänvisa till kort
+  spelaren har.
 """
 
 # Offer the quest anyway after this many player messages, if the model hasn't.
@@ -56,7 +57,13 @@ def chat(mentor: MentorDef, player_id: str, message: str) -> ChatReply:
         return ChatReply(reply=mentor.greeting, offered_quest_id=None)
     thread_id = f"{player_id}:{mentor.id}"
     config = {
-        "configurable": {"thread_id": thread_id, "player_id": player_id, "mentor_id": mentor.id}
+        "configurable": {
+            "thread_id": thread_id,
+            "player_id": player_id,
+            "mentor_id": mentor.id,
+            # Lets offer_quest refuse a second offer in the same thread.
+            "quest_offered": thread_id in _offered,
+        }
     }
     agent = _agent(mentor)
     can_offer = thread_id not in _offered and not quest_done(player_id, mentor.quest_id)

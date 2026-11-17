@@ -116,3 +116,18 @@ def test_asking_after_quest_is_done_does_not_offer_it():
     pid = _player("asks-done")
     _complete(pid, "q-ada-1")
     assert npc.chat(get_mentor("ada"), pid, "Har du en utmaning?").offered_quest_id is None
+
+
+def test_offer_quest_tool_refuses_second_offer_in_thread():
+    pid = _player("offered")
+    config = {"configurable": {"player_id": pid, "mentor_id": "ada", "quest_offered": True}}
+    content, artifact = offer_quest.func(config)
+    assert artifact is None and "redan framme" in content
+
+
+def test_model_offering_again_does_not_set_offered_quest_id():
+    ada = get_mentor("ada")
+    pid = _player("model-twice")
+    assert npc.chat(ada, pid, "Har du en quest?").offered_quest_id == "q-ada-1"
+    reply = npc.chat(ada, pid, "Har du en quest till?")
+    assert reply.offered_quest_id is None and "redan framme" in reply.reply
