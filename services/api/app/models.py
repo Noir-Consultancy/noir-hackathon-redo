@@ -98,6 +98,14 @@ class ChatReply(BaseModel):
     offered_quest_id: str | None
 
 
+class RemarkRequest(BaseModel):
+    player_id: str
+
+
+class Remark(BaseModel):
+    remark: str | None
+
+
 class AttemptRequest(BaseModel):
     player_id: str
     answer: str = Field(default="", max_length=4000)  # required for all but boss quests

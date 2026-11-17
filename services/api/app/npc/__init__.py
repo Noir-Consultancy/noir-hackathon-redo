@@ -1,15 +1,20 @@
 """Mentor agents (package 3): a LangGraph agent per mentor with session memory."""
 
+import logging
+import random
 import re
 
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.llm import get_chat_model
-from app.models import ChatReply
+from app.models import ChatReply, Remark
 from app.npc.tools import TOOLS, quest_done
-from app.world import MentorDef, get_quest
+from app.progress import get_progress
+from app.world import MentorDef, get_mentor, get_quest
+
+log = logging.getLogger(__name__)
 
 RULES = """
 Regler:
@@ -36,6 +41,38 @@ _ASKS_FOR_QUEST = re.compile(r"\b(quest|utmaning|uppdrag)", re.IGNORECASE)
 _checkpointer = InMemorySaver()
 _agents: dict[str, object] = {}
 _offered: set[str] = set()  # threads where the quest has been offered
+_remarked: set[str] = set()  # "player:mentor:card" the mentor has commented on
+
+REMARK_PROMPT = """
+Spelaren går förbi dig. Säg spontant en enda kort mening (högst 15 ord) på svenska, i din
+roll och med du-tilltal.
+
+Det här ska repliken göra: {angle}
+Exempel på stilen (härma inte innehållet): "{example}"
+
+Bakgrund: spelaren har lärt sig {cards}, senast "{title}" från {teacher}. Börja inte med att
+återge vad spelaren lärt sig, och hitta inte på något om hen. Skriv bara repliken.
+"""
+
+# One angle is picked at random per remark, so remarks don't all sound the same.
+REMARK_ANGLES = {
+    "question": (
+        "Ställ en kort, nyfiken fråga till spelaren om något i dina ämnen: {topics}.",
+        "Har du någonsin låtit en agent skriva testerna först?",
+    ),
+    "tip": (
+        "Dela ett konkret tips eller en kul detalj från dina ämnen: {topics}.",
+        "Visste du att en bra AGENTS.md sparar fler tokens än du tror?",
+    ),
+    "quest": (
+        'Väck nyfikenhet på din utmaning "{quest}" utan att avslöja den.',
+        "Jag har en utmaning som bara de skarpaste klarar – vågar du?",
+    ),
+    "card": (
+        'Knyt an till kortet "{title}" med en ny vinkel från dina ämnen: {topics}.',
+        "Kort kontext är bra, men vad händer när svaret ligger i en annan fil?",
+    ),
+}
 
 
 LECTURE = """
@@ -94,3 +131,45 @@ def chat(mentor: MentorDef, player_id: str, message: str) -> ChatReply:
         _offered.add(thread_id)
     reply = _THINK.sub("", messages[-1].text).strip()
     return ChatReply(reply=reply, offered_quest_id=mentor.quest_id if offered else None)
+
+
+def remark(mentor: MentorDef, player_id: str) -> Remark:
+    """A one-sentence remark, once per card the player has that this mentor hasn't remarked on."""
+    progress = get_progress(player_id)
+    cards = progress.cards if progress else []
+    new = [c for c in cards if f"{player_id}:{mentor.id}:{c.id}" not in _remarked]
+    if not new:
+        return Remark(remark=None)
+    card = new[-1]
+    teacher = (
+        "dig"
+        if card.mentor_id == mentor.id
+        else getattr(get_mentor(card.mentor_id), "name", "en mentor")
+    )
+    angles = [
+        a for a in REMARK_ANGLES if a != "quest" or not quest_done(player_id, mentor.quest_id)
+    ]
+    angle, example = REMARK_ANGLES[random.choice(angles)]
+    quest = get_quest(mentor.quest_id)
+    prompt = REMARK_PROMPT.format(
+        angle=angle.format(
+            topics=", ".join(mentor.topics), quest=quest.title if quest else "", title=card.title
+        ),
+        example=example,
+        cards=", ".join(f'"{c.title}"' for c in cards),
+        title=card.title,
+        teacher=teacher,
+    )
+    try:
+        reply = get_chat_model().invoke(
+            [SystemMessage(mentor.persona.strip() + "\n" + prompt), HumanMessage("(går förbi)")]
+        )
+    except Exception:
+        log.exception("Remark failed for mentor %s", mentor.id)
+        return Remark(remark=None)
+    text = _THINK.sub("", reply.text).strip()
+    if not text:
+        log.warning("Empty remark from mentor %s", mentor.id)
+        return Remark(remark=None)
+    _remarked.add(f"{player_id}:{mentor.id}:{card.id}")
+    return Remark(remark=text)

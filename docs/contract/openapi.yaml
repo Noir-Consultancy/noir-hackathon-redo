@@ -115,6 +115,34 @@ paths:
                 offered_quest_id: q-ada-1
         "404": { description: Unknown mentor or player }
 
+  /npcs/{npc_id}/remark:
+    post:
+      summary: A short unprompted remark from a mentor the player walks up to (package 3)
+      description: >
+        The mentor comments once on each card the player has that it hasn't commented on
+        yet. Without a new card, or if the LLM fails, remark is null.
+      parameters:
+        - { name: npc_id, in: path, required: true, schema: { type: string }, example: vera }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id]
+              properties:
+                player_id: { type: string, format: uuid }
+            example: { player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10 }
+      responses:
+        "200":
+          description: The remark, or null if the mentor has nothing new to say
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Remark" }
+              example:
+                remark: "Du lärde dig om kontextfönster hos Karl – visste du att RAG är ett sätt att hålla det litet?"
+        "404": { description: Unknown mentor or player }
+
   /quests/{quest_id}/attempt:
     post:
       summary: Submit an answer to a quest (package 4)
@@ -263,6 +291,11 @@ components:
       properties:
         reply: { type: string }
         offered_quest_id: { type: [string, "null"] }
+    Remark:
+      type: object
+      required: [remark]
+      properties:
+        remark: { type: [string, "null"] }
     AttemptResult:
       type: object
       required: [passed, feedback, xp_awarded, new_card, new_achievements, progress]

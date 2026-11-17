@@ -31,3 +31,6 @@ build/
 
 # --- Node ---
 node_modules/
+
+# Playwright MCP screenshots and logs
+.playwright-mcp/
