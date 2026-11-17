@@ -54,9 +54,15 @@ def test_all_rules_in_yaml_are_valid():
 def test_badges_unlock_as_player_completes_all_quests():
     pid = progress.get_or_create_player("Samlaren").player_id
     unlocked = []
-    for qid in ["q-ada-1", "q-karl-1", "q-vera-1", "q-ada-1"]:
+    for qid in ["q-ada-1", "q-karl-1", "q-vera-1", "q-oracle-1", "q-ada-1"]:
         q = get_quest(qid)
         _, _, new, _ = progress.complete_quest(pid, q.id, q.xp, q.card_id)
         unlocked.append(sorted(a.id for a in new))
-    assert unlocked == [["agentbyns-hjalte", "first-quest"], ["level-2"], ["all-cards"], []]
-    assert len(progress.get_progress(pid).achievements) == 4
+    assert unlocked == [
+        ["agentbyns-hjalte", "first-quest"],
+        ["level-2"],
+        [],
+        ["all-cards", "orakelfallaren"],
+        [],
+    ]
+    assert len(progress.get_progress(pid).achievements) == 5

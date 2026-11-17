@@ -37,6 +37,25 @@ Om svaret är godkänt: säg vad som var bra. Om inte: ge en ledtråd om vad som
 utan att avslöja kriterierna eller ge hela svaret."""
 
 
+BOSS_FAILED = "Orakelbotten skrattar: inte riktigt. Granska påståendena igen."
+BOSS_PASSED = "Rätt! Du fångade orakelns hallucinationer."
+
+
+def judge_boss(quest: QuestDef, selected: list[int]) -> Judgement:
+    """Boss quests: passed if exactly the wrong statements are marked, without the LLM.
+
+    A failure gives the same hint whatever was wrong, so single marks can't be probed.
+    A pass explains every statement.
+    """
+    if set(selected) != set(quest.wrong_statements):
+        return Judgement(passed=False, feedback=BOSS_FAILED)
+    lines = [
+        f"{i + 1}. {'Fel' if i in quest.wrong_statements else 'Stämmer'}: {text.strip()}"
+        for i, text in enumerate(quest.explanations)
+    ]
+    return Judgement(passed=True, feedback="\n\n".join([BOSS_PASSED, *lines]))
+
+
 def build_messages(quest: QuestDef, answer: str) -> list[Any]:
     return [
         SystemMessage(

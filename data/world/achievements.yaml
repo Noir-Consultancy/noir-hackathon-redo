@@ -17,3 +17,7 @@
   title: Codex-samlaren
   description: Samla alla kunskapskort.
   rule: { type: cards_collected }
+- id: orakelfallaren
+  title: Orakelfällaren
+  description: Besegra Den Självsäkre Orakelbotten genom att hitta dess hallucinationer.
+  rule: { type: zone_completed, zone_id: orakelns-arena }

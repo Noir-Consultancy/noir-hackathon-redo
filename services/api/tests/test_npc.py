@@ -195,3 +195,11 @@ def test_empty_remark_does_not_use_up_the_card(fake_llm, monkeypatch):
     assert npc.remark(vera, pid).remark is None
     monkeypatch.setattr(npc, "get_chat_model", lambda: fake_llm)
     assert npc.remark(vera, pid).remark is not None
+
+
+def test_boss_prompt_has_lecture_but_not_the_answers():
+    prompt = npc.system_prompt(get_mentor("orakelbotten"))
+    quest = get_quest("q-oracle-1")
+    assert all(s.strip() in prompt for s in quest.statements)
+    assert not any(e.strip() in prompt for e in quest.explanations)
+    assert "Din föreläsning" not in npc.system_prompt(get_mentor("ada"))

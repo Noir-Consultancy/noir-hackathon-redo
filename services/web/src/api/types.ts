@@ -34,9 +34,11 @@ export interface Quest {
   mentor_id: string;
   title: string;
   task: string;
-  kind: "explain" | "solve" | "choose";
+  kind: "explain" | "solve" | "choose" | "boss";
   xp: number;
   card_id: string;
+  /** Boss quests: the boss's claims, some of them wrong. Empty for other kinds. */
+  statements: string[];
 }
 
 export interface CardSummary {

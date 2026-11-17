@@ -27,5 +27,14 @@ export const chat = (npcId: string, playerId: string, message: string) =>
 export const getRemark = (npcId: string, playerId: string) =>
   post<Remark>(`/npcs/${npcId}/remark`, { player_id: playerId });
 
-export const attemptQuest = (questId: string, playerId: string, answer: string) =>
-  post<AttemptResult>(`/quests/${questId}/attempt`, { player_id: playerId, answer });
+export const attemptQuest = (
+  questId: string,
+  playerId: string,
+  answer: string,
+  selectedStatements: number[] = [],
+) =>
+  post<AttemptResult>(`/quests/${questId}/attempt`, {
+    player_id: playerId,
+    answer,
+    selected_statements: selectedStatements,
+  });
