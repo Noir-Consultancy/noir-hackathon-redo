@@ -1,8 +1,9 @@
 # Kunskapsriket
 
 Ett utforskande 2D-RPG där seniora systemutvecklare lär sig AI-koncept och moderna
-arbetssätt genom att prata med AI-mentorer, klara quests och samla kunskapskort. Byggt av
-Emma, Daniel, Robert och Oskar på NOIRs höstkonferens 2026.
+arbetssätt genom att prata med AI-mentorer, klara quests och samla kunskapskort. Påbörjat
+av Emma, Daniel, Robert och Oskar på hackathonet på NOIRs höstkonferens 2026 och
+vidareutvecklat i teamsessioner.
 
 ## Kör
 ```bash
@@ -33,4 +34,4 @@ npm run build                 # typkontroll och bygge
 
 ## Dokumentation
 - [Spec](docs/spec.md) · [Plan](docs/plan.md) · [Kontrakt](docs/contract/)
-- [Konferensmaterial](konferens/)
+- [Bakgrund från konferensen](konferens/)
