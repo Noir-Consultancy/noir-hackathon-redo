@@ -41,9 +41,10 @@ class Quest(BaseModel):
     mentor_id: str
     title: str
     task: str
-    kind: Literal["explain", "solve", "choose"]
+    kind: Literal["explain", "solve", "choose", "boss"]
     xp: int
     card_id: str
+    statements: list[str] = []  # boss quests: the boss's claims, some of them wrong
 
 
 class CardSummary(BaseModel):
@@ -100,6 +101,8 @@ class ChatReply(BaseModel):
 class AttemptRequest(BaseModel):
     player_id: str
     answer: str = Field(min_length=1, max_length=4000)
+    # Boss quests: 0-based indices of the statements the player marks as wrong.
+    selected_statements: list[int] = Field(default=[], max_length=20)
 
 
 class AttemptResult(BaseModel):

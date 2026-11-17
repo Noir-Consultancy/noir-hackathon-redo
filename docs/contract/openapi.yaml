@@ -130,6 +130,10 @@ paths:
               properties:
                 player_id: { type: string, format: uuid }
                 answer: { type: string, minLength: 1, maxLength: 4000 }
+                selected_statements:
+                  type: array
+                  items: { type: integer, minimum: 0 }
+                  description: "Boss quests: 0-based indices of the statements the player marks as wrong"
             example: { player_id: 3f6c2a1e-8b1d-4c39-9a77-2d5e0f1b9c10, answer: "Att testerna täcker ändringen, att den följer projektets konventioner och att inget onödigt har ändrats." }
       responses:
         "200":
@@ -195,15 +199,19 @@ components:
         quest_id: { type: string }
     Quest:
       type: object
-      required: [id, mentor_id, title, task, kind, xp, card_id]
+      required: [id, mentor_id, title, task, kind, xp, card_id, statements]
       properties:
         id: { type: string }
         mentor_id: { type: string }
         title: { type: string }
         task: { type: string }
-        kind: { type: string, enum: [explain, solve, choose] }
+        kind: { type: string, enum: [explain, solve, choose, boss] }
         xp: { type: integer }
         card_id: { type: string }
+        statements:
+          type: array
+          items: { type: string }
+          description: "Boss quests: the boss's claims, some of them wrong. Empty for other kinds"
     CardSummary:
       type: object
       required: [id, title, mentor_id]
