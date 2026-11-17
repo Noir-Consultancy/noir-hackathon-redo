@@ -16,6 +16,7 @@ export interface Zone {
   topic: string;
   bounds: Rect;
   color: string;
+  required_level: number;
 }
 
 export interface Mentor {
