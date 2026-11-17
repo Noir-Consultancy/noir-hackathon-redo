@@ -161,7 +161,8 @@ export function startUi(root: HTMLElement): void {
   // Codex on C. Only while playing: not before the name is set or over another modal.
   let codex: HTMLElement | null = null;
   const closeCodex = () => {
-    codex?.remove();
+    if (!codex) return;
+    codex.remove();
     codex = null;
     bus.emit("ui:modal-close", {});
   };
@@ -174,6 +175,8 @@ export function startUi(root: HTMLElement): void {
     root.append(codex);
   };
   window.addEventListener("keydown", (e) => {
+    // Holding C or pressing Cmd/Ctrl+C (copy) should not toggle the codex.
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
     if (codex && (e.key === "Escape" || (!typing && e.key.toLowerCase() === "c"))) closeCodex();
     else if (!codex && !typing && !modalOpen && e.key.toLowerCase() === "c") void openCodex();

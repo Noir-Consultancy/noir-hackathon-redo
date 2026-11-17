@@ -39,7 +39,8 @@ function cardDetail(c: CodexCard): HTMLElement {
 function badge(a: Achievement, unlocked: boolean): HTMLElement {
   return el(
     "li",
-    { className: unlocked ? "badge" : "badge locked", title: a.description },
+    // Locked badges already show the description as a hint, so no tooltip there.
+    unlocked ? { className: "badge", title: a.description } : { className: "badge locked" },
     unlocked ? `🏅 ${a.title}` : `░ ${a.description}`,
   );
 }
