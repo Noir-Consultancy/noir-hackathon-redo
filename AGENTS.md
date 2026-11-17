@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for coding agents (Claude Code, Codex, etc.) working in this repository.
+Instructions for coding agents working in this repository.
 
 ## Context
 
@@ -17,19 +17,21 @@ using coding agents throughout. The MVP is done. See the Project section below.
 Agreed by the team. If the user wants to change one, say it's a team rule and offer to
 draft a proposal (e.g. a small PR to `AGENTS.md`) instead of changing it.
 
-### Scope, packages and contract
+### Scope, issues and contract
 
 - **Keep it simple.** Prefer the simplest thing that works. Avoid gold-plating and
   premature abstractions; propose large refactors before starting them.
-- **Own package.** Each member owns specific services or modules (see `docs/plan.md`).
-  Edit only your own package. For a change elsewhere, ask its owner. Stub what you
-  depend on instead of waiting. Shared files (`compose.yaml`, `.env.example`, `docs/`)
-  are the exception: change them in small separate commits and tell the team.
-- **Contract, if the team has one.** Interfaces between components (APIs, event
-  schemas, shared data models) may be defined in `docs/contract/`. If so, implement
-  against it and don't change it silently: agree changes with the affected teammates
-  and commit them separately. Without a contract, agree interfaces with their owner as
-  you go.
+- **Issues are the task list.** Anyone may work anywhere in the repo, and anyone may
+  create, update or close GitHub issues. Assign yourself when you start an issue, so
+  others see it's taken; unassign if you drop it. One issue = one branch and one PR.
+- **Shared files** (`compose.yaml`, `.env.example`, `AGENTS.md`, `docs/`,
+  `services/api/app/main.py`, `services/api/app/llm.py`, `services/web/src/main.ts`):
+  change them in small separate commits and tell the team.
+- **Contract.** Interfaces between components are defined in `docs/contract/` and
+  implemented in `services/api/app/models.py`, `services/web/src/api/types.ts` and
+  `services/web/src/events.ts`. Implement against it and don't change any of these
+  silently: agree changes with the teammates working on the affected parts and commit
+  them separately.
 
 ### Configuration and LLM access
 
@@ -44,10 +46,9 @@ draft a proposal (e.g. a small PR to `AGENTS.md`) instead of changing it.
 ### Versions and dependencies
 
 Everyone needs the tools and versions under *Project → Setup*. Use the pinned versions
-and commit lock files. Adding a dependency to your own package (e.g. a test library) is fine; mention it
-in the PR. Raise it with the team only when it affects others: changing a pinned runtime
-or framework version, changing or removing something others use, or editing shared
-files.
+and commit lock files. Adding a dependency (e.g. a test library) is fine; mention it in
+the PR. Raise it with the team when it affects others: changing a pinned runtime or
+framework version, or changing or removing something others use.
 
 ### Containers
 
@@ -70,7 +71,9 @@ adding it.
 
 ### Git
 
-- Branch per task: `<name>/<short-topic>`, e.g. `anna/quiz-api`.
+- Branch per issue or task: `<type>/<short-topic>`, where the type is one of
+  `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`, `test/`. E.g.
+  `feature/minimap`, `fix/nginx-502`.
 - All work goes through branches and PRs.
 - **Ask before pushing.** Commit locally as you go, but never run `git push` (or merge a
   PR) without the user's explicit ok in the current conversation. Say which branch it
@@ -80,18 +83,20 @@ adding it.
 - Bring `main` into your branch often with `git fetch origin && git merge origin/main`.
   Prefer merge over rebase, so conflicts are resolved once and no force-push is needed.
 - Never rewrite history on or force-push to `main`.
-- Keep PRs small: one task per PR. Suggest opening one (see the `create-pr` skill) when
-  a task is done. PRs are squash-merged (the only option on GitHub), and merged branches
+- Keep PRs small: one issue or task per PR, with `Closes #<issue>` in the description so
+  the issue closes on merge. Suggest opening one (see the `create-pr` skill) when a task
+  is done. PRs are squash-merged (the only option on GitHub), and merged branches
   are deleted automatically.
-- Start the next task on a new branch from an updated `main`, or from the previous task
-  branch if its PR isn't merged yet and you need its changes (say so in the PR, and
-  merge `origin/main` once it is).
+- Start the next task on a new branch from an updated `main`. Prefer waiting for a PR
+  to merge over stacking branches: with squash merges a stacked branch gets the same
+  changes twice. If you must stack, rebase it onto `main` once the first PR is merged
+  (`git rebase --onto origin/main <old-branch>`) and say so in the PR.
 
 ## Personal defaults
 
 Each member may adjust these. Apply the user's changes for the session and, if they
-want, save them in one gitignored file: `CLAUDE.local.md` (Claude Code loads it) or
-`AGENTS.local.md` (read it if present). Never put personal preferences in shared files.
+want, save them in a gitignored local file (`CLAUDE.local.md` for Claude Code,
+`AGENTS.local.md` for other agents). Never put personal preferences in shared files.
 Personal preferences may tighten team rules, not loosen them. When the user corrects the same thing
 twice, suggest saving it.
 
@@ -100,22 +105,21 @@ twice, suggest saving it.
 Once the Project section is filled in, start every session (new, or after `/clear`)
 like this, before any planning or code. The user leads; skip anything they wave off.
 
-1. **Who.** Identify the user from `git config user.name` and `user.email`,
-   `gh api user -q .login` (if available) and the branch name, matched against the team
-   table. If there is no clear match, ask in one line.
+1. **Who.** Identify the user from `gh api user -q .login` (or `git config user.name`),
+   matched against the team table. If there is no clear match, ask in one line.
 2. **Current state.** Check quietly, where present: current branch and uncommitted
-   changes, the user's latest task plan in `docs/tasks/`, their open and recently merged
-   PRs (`gh pr list --author @me --state all`, if available), their tasks in
-   `docs/plan.md` and what is new on `origin/main` that affects them. In a first session
-   (no preferences file, branch or task plan of theirs yet), also check the tools and
+   changes, issues assigned to them (`gh issue list --assignee @me`) and their task plans
+   in `docs/tasks/`, their open and recently merged PRs (`gh pr list --author @me --state
+   all`), open unassigned issues and what is new on `origin/main`. In a first session
+   (no local preferences file and no PRs of theirs yet), also check the tools and
    versions under *Project → Setup*; later, only when something fails.
 3. **Briefing** (≤ 6 lines, user's language): the project in one sentence the first
-   time; their package; where they are now. In a first session, add each setup blocker
+   time; where they are now. In a first session, add each setup blocker
    or version mismatch with a fix or workaround (install nothing without the user's ok),
-   and one line on the defaults: branch per task, a short plan per feature, PR when
-   done; say if you want to work differently.
-4. **Next step.** Show their open tasks in order and ask what they want to do: the next task,
-   something else, or an idea of their own. Don't pick for them.
+   and one line on the defaults: issue and branch per task, a short plan per feature, PR
+   when done; say if you want to work differently.
+4. **Next step.** Show their assigned issues, then open unassigned ones, and ask what they
+   want to do: one of those, or an idea of their own. Don't pick for them.
 
 ### Communication
 
@@ -135,48 +139,52 @@ like this, before any planning or code. The user leads; skip anything they wave 
 
 ### Task workflow
 
-1. **Pick** a task with the user: the next one from their part of `docs/plan.md`, or an
-   idea of their own. Check that it is about one feature (one small PR); if larger,
-   propose splitting it first. Then create its branch `<name>/<short-topic>`.
+1. **Pick** a task with the user: an open issue, or an idea of their own (offer to create
+   an issue for it with `gh issue create`). Check that it is about one feature (one small
+   PR); if larger, propose splitting it into issues first. Assign the user
+   (`gh issue edit <nr> --add-assignee @me`) and create its branch `<type>/<short-topic>`.
 2. **Plan.** Ask how the user sees the task first (goal, what it should do or look
    like), then fill in the approach together. For a feature, write a short plan in
-   `docs/tasks/<name>-<NN>-<topic>.md` (`NN` = 01, 02 … per member): goal, approach,
+   `docs/tasks/<issue>-<topic>.md`, e.g. `docs/tasks/34-minimap.md`: goal, approach,
    files, contract parts used or changed, how to test. Bug fixes and small tweaks don't
    need one. Get the user's ok before building.
 3. **Build** in small commits. Keep the plan updated if the
    approach changes.
-4. **PR** when the task is done: open it and link the plan, if there is one.
-5. **Next task.** When the user's planned tasks are done, ask whether the user has an
-   idea of their own; otherwise offer one or two candidates, e.g. from *Utbyggnader* or
-   *Utanför scope* in `docs/spec.md`, *Kända problem* in `docs/plan.md` or integration
-   gaps. Agree on one and continue from step 1; no need to add it to `docs/plan.md`.
-   Anything that changes another package or the shared scope needs the team's ok.
+4. **Review and PR** when the task is done: run `/code-review` (and `/security-review` when
+   relevant, see below), fix what's worth fixing, then open the PR with `Closes #<issue>`
+   and a link to the plan, if there is one.
+5. **Next task.** Pick the next open issue, or offer one or two candidates, e.g. from
+   *Utbyggnader* or *Utanför scope* in `docs/spec.md` or *Kända problem* in
+   `docs/plan.md`, and create an issue for it. Changes to the shared scope need the
+   team's ok.
 
-## Skills and agents
+## Skills
 
-These are examples. The team may change them or add new ones for recurring tasks.
-- `create-pr` skill (`.agents/skills/create-pr/`): small PR with teammates as reviewers.
-- `code-reviewer` subagent (`.claude/agents/`, `.codex/agents/`): reviews the current
-  branch before a PR is opened, or a teammate's PR by number, and runs the quality gates
-  on checked-out code. It reports blockers and nits, including deviations from contract
-  and plan. Present all its findings to the user. When reviewing an existing PR, offer to
-  post some or all of them as a PR comment (`gh pr comment`), and post only after the
-  user agrees.
+The team uses Claude Code (`CLAUDE.md` imports this file); the slash commands below are
+its built-in skills. The team may change these or add new ones for recurring tasks.
+- `create-pr` (`.claude/skills/create-pr/`): small PR with `Closes #<issue>` and teammates
+  as reviewers.
+- `/code-review` (built in): before opening a PR, and `/code-review <PR#>` for a
+  teammate's PR. Present all findings to the user. Post them as a PR comment only after
+  the user agrees.
+- `/security-review` (built in): for changes to input handling, secrets, dependencies,
+  auth or the LLM boundary (prompts, tool calls).
+- `/simplify` (built in): for refactors and, once in a while, general cleanup.
 
 ## Project
 
 **Kunskapsriket** – an exploratory 2D RPG where senior developers learn AI concepts and
 modern ways of working by talking to AI mentor agents, completing quests and collecting
-knowledge cards. Spec: `docs/spec.md` · Plan and ownership: `docs/plan.md` · Contract:
-`docs/contract/` · Tasks: GitHub issues #1–#13.
+knowledge cards. Spec: `docs/spec.md` · Plan and status: `docs/plan.md` · Contract:
+`docs/contract/` · Tasks: GitHub issues.
 
 ### Team
-| Name | GitHub | Owns |
-|---|---|---|
-| Oskar | @skrlssn | 1. Game world: `services/web/src/game/` |
-| Emma | @emra | 2. UI and HUD: `services/web/src/ui/`, `services/web/src/api/` |
-| Robert | @robertocus | 3. Mentor agents: `services/api/app/npc/`, `services/api/app/world/`, `data/world/zones.yaml`, `data/world/mentors.yaml` |
-| Daniel | @DMillevik | 4. Quests and progression: `services/api/app/quests/`, `services/api/app/progress/`, `data/world/quests.yaml`, `cards.yaml`, `achievements.yaml` |
+| Name | GitHub |
+|---|---|
+| Oskar | @skrlssn |
+| Emma | @emra |
+| Robert | @robertocus |
+| Daniel | @DMillevik |
 
 ### Components
 | Service | Path | Stack | Port |

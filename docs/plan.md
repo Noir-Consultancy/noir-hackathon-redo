@@ -1,24 +1,23 @@
-# Plan och arbetsfördelning
+# Plan och status
 
 Spec: [spec.md](spec.md) · Kontrakt: [contract/](contract/)
 
-## Team
-| Namn | GitHub | Paket | Gren |
-|---|---|---|---|
-| Oskar | @skrlssn | 1. Spelvärld | `oskar/<ämne>`, t.ex. `oskar/tilemap` |
-| Emma | @emra | 2. UI och HUD | `emma/<ämne>`, t.ex. `emma/quest-dialog` |
-| Robert | @robertocus | 3. Mentoragenter | `robert/<ämne>`, t.ex. `robert/mentor-agent` |
-| Daniel | @DMillevik | 4. Quests och progression | `daniel/<ämne>`, t.ex. `daniel/postgres-progress` |
+Uppgifter finns som GitHub issues. Vem som helst kan skapa, uppdatera och ta en issue
+(tilldela dig själv). Arbetssättet beskrivs i `AGENTS.md`.
 
-## Arbetspaket
-| Paket | Äger (sökvägar) | Levererar | Använder |
+## Delar
+Under MVP:n ägde var och en en del. Nu kan alla jobba överallt; tabellen visar hur delarna
+hänger ihop.
+
+| Del | Sökvägar | Levererar | Använder |
 |---|---|---|---|
 | 1. Spelvärld | `services/web/src/game/` | Phaser-scen, `npc:interact` | `getWorld()`, `player:ready`, `ui:modal-*` |
 | 2. UI och HUD | `services/web/src/ui/`, `services/web/src/api/` | Namn, HUD, dialog, quests, codex, API-klient; `player:ready`, `ui:modal-*` | `npc:interact`, alla endpoints |
 | 3. Mentoragenter | `services/api/app/npc/`, `services/api/app/world/`, `data/world/zones.yaml`, `data/world/mentors.yaml` | `GET /world`, `POST /npcs/{id}/chat`, `get_world()`/`get_quest()`… | `get_progress()`, LLM |
 | 4. Quests och progression | `services/api/app/quests/`, `services/api/app/progress/`, `data/world/quests.yaml`, `cards.yaml`, `achievements.yaml` | `POST /players`, `GET /players/{id}`, `POST /quests/{id}/attempt`, `get_progress()` | `get_quest()`, `get_card()`, LLM, Postgres |
 
-## Uppgifter
+## MVP-uppgifter
+Fördelningen under hackathonet. Alla MVP-uppgifter är klara; utbyggnaderna kan bli issues.
 
 ### 1. Spelvärld (Oskar)
 0. Skelett (klart): zoner som färgade rektanglar, mentorer från `/world`, piltangenter,
@@ -49,13 +48,6 @@ Spec: [spec.md](spec.md) · Kontrakt: [contract/](contract/)
 2. [MVP, klar] (#12) LLM-bedömning med strukturerad output (`passed`, `feedback`) mot questens `criteria`.
 3. [MVP, klar] (#13) Achievement-regler från `achievements.yaml` (`quests_completed`, `zone_completed`, `level_reached`).
 4. [Utbyggnad] Fler quests per mentor, zoner som låses upp med nivå (med Oskar), quests i flera steg.
-
-## Delade filer
-`compose.yaml`, `.env.example`, `AGENTS.md`, `docs/`, `services/api/app/main.py`,
-`services/api/app/models.py`, `services/api/app/llm.py`, `services/web/src/main.ts`,
-`services/web/src/events.ts`: ändras i små separata commits, mergas snabbt, säg till i
-teamet. Kontraktsändringar (`docs/contract/`, `models.py`, `events.ts`, `api/types.ts`)
-kräver ok från de berörda paketägarna.
 
 ## Status
 MVP:n är klar: hela huvudflödet fungerar från `main` med riktig LLM (gå till en mentor,
