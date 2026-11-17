@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for Claude Code working in this repository. `CLAUDE.md` imports this file.
+Instructions for coding agents working in this repository.
 
 ## Context
 
@@ -93,7 +93,7 @@ adding it.
 ## Personal defaults
 
 Each member may adjust these. Apply the user's changes for the session and, if they
-want, save them in the gitignored `CLAUDE.local.md` (Claude Code loads it). Never put personal preferences in shared files.
+want, save them in a gitignored local file (`CLAUDE.local.md` for Claude Code). Never put personal preferences in shared files.
 Personal preferences may tighten team rules, not loosen them. When the user corrects the same thing
 twice, suggest saving it.
 
@@ -157,7 +157,8 @@ like this, before any planning or code. The user leads; skip anything they wave 
 
 ## Skills
 
-The team may change these or add new ones for recurring tasks.
+The team uses Claude Code (`CLAUDE.md` imports this file). It may change these skills or
+add new ones for recurring tasks.
 - `create-pr` (`.claude/skills/create-pr/`): small PR with `Closes #<issue>` and teammates
   as reviewers.
 - `/code-review` (built in): before opening a PR, and `/code-review <PR#>` for a
