@@ -25,7 +25,8 @@ export function createNotifier(root: HTMLElement) {
       return;
     }
     showingBanner = true;
-    const banner = el("div", { className: "banner" }, text);
+    // Banners with extra lines (e.g. unlocked zones) stay up a little longer.
+    const banner = el("div", { className: text.includes("\n") ? "banner long" : "banner" }, text);
     onFadedOut(banner, nextBanner);
     root.append(banner);
   };

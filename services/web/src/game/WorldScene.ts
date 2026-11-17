@@ -48,8 +48,9 @@ export class WorldScene extends Phaser.Scene {
   private banner?: Phaser.GameObjects.Container;
   private active = false; // true once the player has a name and no modal is open
   private doors: Point[] = [];
-  private level = 1; // the player's level, refreshed with the markers
-  private gates!: Phaser.Physics.Arcade.StaticGroup;
+  private doorZones: [number, number][] = [];
+  private level: number | null = null; // the player's level once progress has loaded
+  private gates?: Phaser.Physics.Arcade.StaticGroup;
   private lockHint!: Phaser.GameObjects.Text;
   private lockHintUntil = 0;
 
@@ -73,12 +74,12 @@ export class WorldScene extends Phaser.Scene {
       const wasActive = this.active;
       this.setActive(this.ui.active);
       // Player ready or a dialog closed: a quest may have been completed.
-      if (this.active && !wasActive) void this.refreshMarkers();
+      if (this.active && !wasActive) void this.refreshProgress();
     });
 
     try {
       this.drawWorld(await getWorld());
-      if (this.active) void this.refreshMarkers();
+      if (this.active) void this.refreshProgress();
     } catch (err) {
       console.error("Could not load the world", err);
       const { width, height } = this.scale;
@@ -114,6 +115,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.zones = world.zones;
     this.doors = map.doors;
+    this.doorZones = map.doorZones;
 
     const mentorBodies = this.physics.add.staticGroup();
     for (const m of world.mentors) {
@@ -171,8 +173,9 @@ export class WorldScene extends Phaser.Scene {
     this.body.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, walls);
     this.physics.add.collider(this.player, mentorBodies);
-    this.gates = this.physics.add.staticGroup();
-    this.physics.add.collider(this.player, this.gates, (_player, gate) => {
+    const gates = this.physics.add.staticGroup();
+    this.gates = gates;
+    this.physics.add.collider(this.player, gates, (_player, gate) => {
       this.showLockHint((gate as Phaser.GameObjects.GameObject).getData("zone") as Zone);
     });
     this.updateGates();
@@ -195,18 +198,24 @@ export class WorldScene extends Phaser.Scene {
       .setVisible(false);
   }
 
-  /** Closed gates on doors into zones above the player's level; fades out unlocked ones. */
+  /**
+   * Closed gates on doors into zones above the player's level; fades out unlocked ones.
+   * Waits for both the map and the player's level, so a returning player never sees gates
+   * for zones they have already unlocked.
+   */
   private updateGates(): void {
-    const locked = lockedDoors(this.zones, this.doors, this.level);
+    const gates = this.gates;
+    if (!gates || this.level === null) return;
+    const locked = lockedDoors(this.zones, this.doors, this.doorZones, this.level);
     const key = (p: Point) => `${p.x},${p.y}`;
     const stillLocked = new Set(locked.map((d) => key(d.cell)));
-    for (const gate of [...this.gates.getChildren()]) {
+    for (const gate of [...gates.getChildren()]) {
       if (stillLocked.has(gate.getData("cell"))) continue;
-      this.gates.remove(gate);
+      gates.remove(gate);
       const targets = [gate, gate.getData("lock")];
       this.tweens.add({ targets, alpha: 0, duration: 600, onComplete: () => gate.destroy() });
     }
-    const existing = new Set(this.gates.getChildren().map((g) => g.getData("cell")));
+    const existing = new Set(gates.getChildren().map((g) => g.getData("cell")));
     for (const { cell, zone } of locked) {
       if (existing.has(key(cell))) continue;
       const x = (cell.x + 0.5) * TILE;
@@ -216,7 +225,7 @@ export class WorldScene extends Phaser.Scene {
       const lock = this.add.text(x, y, "🔒", { fontSize: "16px" }).setOrigin(0.5).setDepth(1);
       gate.setData("lock", lock);
       gate.once("destroy", () => lock.destroy());
-      this.gates.add(gate);
+      gates.add(gate);
     }
   }
 
@@ -289,8 +298,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Updates "!" / "✓" and the gates from the player's progress; keeps them on errors. */
-  private async refreshMarkers(): Promise<void> {
-    if (!this.ui.playerId || this.mentors.length === 0) return;
+  private async refreshProgress(): Promise<void> {
+    if (!this.ui.playerId) return;
     try {
       const { completed_quests, level } = await getProgress(this.ui.playerId);
       for (const m of this.mentors) {
@@ -302,7 +311,7 @@ export class WorldScene extends Phaser.Scene {
         this.updateGates();
       }
     } catch (err) {
-      console.warn("Could not refresh mentor markers", err);
+      console.warn("Could not refresh the player's progress", err);
     }
   }
 

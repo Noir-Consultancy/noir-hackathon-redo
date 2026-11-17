@@ -234,6 +234,12 @@ body {
   pointer-events: none;
   animation:
     banner-in 0.4s ease-out,
+    fade-out 0.4s ease-in 2.1s forwards;
+}
+
+.banner.long {
+  animation:
+    banner-in 0.4s ease-out,
     fade-out 0.4s ease-in 3.1s forwards;
 }
 
