@@ -13,3 +13,5 @@ LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3.5:9b")
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "ollama")
 # Optional, e.g. "none" to turn off thinking in reasoning models (qwen3). Empty: not sent.
 LLM_REASONING_EFFORT = os.environ.get("LLM_REASONING_EFFORT") or None
+# Seconds per LLM request before giving up (one retry), so a hung model fails fast.
+LLM_TIMEOUT = float(os.environ.get("LLM_TIMEOUT", "60"))
