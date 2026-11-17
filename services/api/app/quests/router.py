@@ -17,7 +17,12 @@ def attempt(quest_id: str, body: AttemptRequest) -> AttemptResult:
         raise HTTPException(404, f"Unknown player: {body.player_id}")
 
     try:
-        judgement = quests.judge(quest, body.answer)
+        # Boss quests: the marked statements are checked without the LLM.
+        hint = quests.check_statements(quest, body.selected_statements)
+        if quest.kind == "boss" and hint:
+            judgement = quests.Judgement(passed=False, feedback=hint)
+        else:
+            judgement = quests.judge(quest, body.answer)
     except quests.JudgeUnavailable as err:
         raise HTTPException(503, "Bedömningen är inte tillgänglig just nu, försök igen.") from err
     if not judgement.passed:

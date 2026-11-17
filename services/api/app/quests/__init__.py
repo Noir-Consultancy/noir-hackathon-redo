@@ -37,11 +37,29 @@ Om svaret är godkänt: säg vad som var bra. Om inte: ge en ledtråd om vad som
 utan att avslöja kriterierna eller ge hela svaret."""
 
 
+def check_statements(quest: QuestDef, selected: list[int]) -> str | None:
+    """Boss quests: a hint if the player marked the wrong statements, else None."""
+    chosen, wrong = set(selected), set(quest.wrong_statements)
+    if chosen - wrong:
+        return "Något du kryssade i stämmer faktiskt. Granska påståendena igen."
+    if wrong - chosen:
+        return "Orakelbotten skrattar: du har inte hittat alla fel ännu."
+    return None
+
+
+def _numbered(statements: list[str]) -> str:
+    return "\n".join(f"{i + 1}. {s.strip()}" for i, s in enumerate(statements))
+
+
 def build_messages(quest: QuestDef, answer: str) -> list[Any]:
+    task, criteria = quest.task.strip(), quest.criteria.strip()
+    if quest.statements:
+        wrong = ", ".join(str(i + 1) for i in sorted(quest.wrong_statements))
+        task += "\n\nPåståenden:\n" + _numbered(quest.statements)
+        criteria += f"\n\nSpelaren har redan pekat ut rätt felaktiga påståenden ({wrong})."
+        criteria += " Bedöm bara motiveringen."
     return [
-        SystemMessage(
-            SYSTEM_PROMPT.format(task=quest.task.strip(), criteria=quest.criteria.strip())
-        ),
+        SystemMessage(SYSTEM_PROMPT.format(task=task, criteria=criteria)),
         HumanMessage(answer),
     ]
 

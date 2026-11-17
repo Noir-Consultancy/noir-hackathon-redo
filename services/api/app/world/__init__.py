@@ -20,6 +20,7 @@ class MentorDef(Mentor):
 
 class QuestDef(Quest):
     criteria: str
+    wrong_statements: list[int] = []  # boss quests: 0-based indices of the wrong claims
 
 
 class AchievementDef(Achievement):
