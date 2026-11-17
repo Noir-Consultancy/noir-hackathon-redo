@@ -31,6 +31,8 @@ const WANDER_SPEED = 40;
 const REST_MS = [2000, 5000]; // pause between walks
 const THINKING_DELAY = 300; // show "…" only if the remark takes longer than this
 const LINGER_MS = 3000; // a remark stays this long after the player walks away
+const HUD_HEIGHT = TILE * 2.5; // the HUD covers the top of the screen; bubbles stay below it
+const BUBBLE_MARGIN = 8;
 const LOCK_HINT_MS = 1500;
 
 interface MentorSprite {
@@ -359,18 +361,22 @@ export class WorldScene extends Phaser.Scene {
 
   /**
    * A showing remark stays while the player is close and disappears LINGER_MS after they
-   * leave. The bubble sits above the mentor, or below the "[E] Prata" hint if it would go
-   * off the top of the screen.
+   * leave. Bubbles are hidden while a dialog is open. The bubble sits above the mentor, or
+   * below the "[E] Prata" hint if it would go under the HUD, and is kept inside the screen.
    */
   private updateBubble(m: MentorSprite, dist: number, time: number): void {
     if (m.remark === "showing") {
       if (dist < FACE_RANGE) m.hideAt = Math.max(m.hideAt, time + LINGER_MS);
       if (time > m.hideAt) this.hideRemark(m);
     }
+    m.bubble.setVisible(this.active && m.bubble.text !== "");
     if (!m.bubble.visible) return;
-    const above = m.pos.y - this.cameras.main.worldView.y > TILE * 2.1 + m.bubble.height;
+    const view = this.cameras.main.worldView;
+    const above = m.pos.y - view.y - HUD_HEIGHT > TILE * 2.1 + m.bubble.height;
     if (above) m.bubble.setOrigin(0.5, 1).setY(-TILE * 2.1);
     else m.bubble.setOrigin(0.5, 0).setY(TILE * 1.5);
+    const half = m.bubble.width / 2 + BUBBLE_MARGIN;
+    m.bubble.setX(Phaser.Math.Clamp(m.pos.x, view.x + half, view.right - half) - m.pos.x);
   }
 
   /** A mentor remarks on something when the player walks up to it, once per approach. */
@@ -387,13 +393,14 @@ export class WorldScene extends Phaser.Scene {
 
   /**
    * "…" while the remark loads, then the remark. If the player has already walked away it
-   * still shows, for a short reading time.
+   * still shows, for a short reading time. A remark that arrives while a dialog is open
+   * shows when it closes (the server has already used up the card).
    */
   private async remark(m: MentorSprite, playerId: string): Promise<void> {
     const id = ++m.remarkId;
     m.remark = "loading";
     this.time.delayedCall(THINKING_DELAY, () => {
-      if (m.remarkId === id) m.bubble.setText("…").setVisible(true);
+      if (m.remarkId === id) m.bubble.setText("…");
     });
     let text: string | null = null;
     try {
@@ -401,12 +408,12 @@ export class WorldScene extends Phaser.Scene {
     } catch (err) {
       console.warn("Could not get a remark", err);
     }
-    if (m.remarkId !== id) return; // discarded: the player started talking
+    if (m.remarkId !== id) return; // discarded
     if (!text) {
       this.hideRemark(m);
       return;
     }
-    m.bubble.setText(text).setVisible(true);
+    m.bubble.setText(text);
     m.remark = "showing";
     m.hideAt = this.time.now + Math.min(2000 + text.length * 50, 6000);
   }
@@ -414,7 +421,7 @@ export class WorldScene extends Phaser.Scene {
   private hideRemark(m: MentorSprite): void {
     m.remarkId++;
     m.remark = "idle";
-    m.bubble.setVisible(false);
+    m.bubble.setText("");
   }
 
   /** Ground and wall layers from 16 px tiles scaled up to TILE. Returns the wall layer. */
@@ -502,10 +509,7 @@ export class WorldScene extends Phaser.Scene {
 
   private interact(): void {
     const mentor = this.active && this.nearbyMentor();
-    if (!mentor) return;
-    // The dialog takes over: drop the remark, and don't make the chat wait for it.
-    this.hideRemark(mentor);
-    bus.emit("npc:interact", { npcId: mentor.id });
+    if (mentor) bus.emit("npc:interact", { npcId: mentor.id });
   }
 
   update(time: number): void {
