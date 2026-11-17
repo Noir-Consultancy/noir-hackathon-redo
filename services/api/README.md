@@ -36,3 +36,4 @@ uv run ruff format --check
 | `LLM_MODEL` | `qwen3.5:9b` | Modellnamn. Större modell (t.ex. `qwen3.6:27b`) för att spela på riktigt |
 | `LLM_API_KEY` | `ollama` | API-nyckel (godtycklig för Ollama) |
 | `LLM_REASONING_EFFORT` | (tom) | `none` stänger av tänkande i reasoning-modeller, mycket snabbare |
+| `LLM_TIMEOUT` | `60` | Sekunder per LLM-anrop innan det ger upp (ett nytt försök) |

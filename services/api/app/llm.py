@@ -12,4 +12,6 @@ def get_chat_model(temperature: float = 0.7) -> ChatOpenAI:
         model=config.LLM_MODEL,
         temperature=temperature,
         reasoning_effort=config.LLM_REASONING_EFFORT,
+        timeout=config.LLM_TIMEOUT,
+        max_retries=1,
     )

@@ -82,15 +82,19 @@ def test_lookup_card_only_unlocked():
     assert lookup_card.func("fotboll", _config(pid)) == "Inget kort."
 
 
-def test_asking_for_quest_offers_it_without_llm(fake_llm):
+def test_asking_for_quest_offers_it_alongside_model_reply():
     ada = get_mentor("ada")
     pid = _player("asks")
     reply = npc.chat(ada, pid, "Har du någon utmaning åt mig?")
     assert reply.offered_quest_id == "q-ada-1"
-    assert reply.reply == 'Då har jag en utmaning åt dig: "Granska agentens kod". Lycka till!'
-    assert fake_llm.seen == []
-    # The exchange is in the thread's memory: the next reply sees two user messages.
+    assert reply.reply.startswith("svar 1")
     assert npc.chat(ada, pid, "Tack").reply.startswith("svar 2")
+
+
+def test_question_mentioning_challenges_is_still_answered():
+    reply = npc.chat(get_mentor("ada"), _player("q"), "Vilka är de största utmaningarna?")
+    assert reply.reply.startswith("svar 1")
+    assert reply.offered_quest_id == "q-ada-1"
 
 
 def test_quest_keywords_match_inflections():
