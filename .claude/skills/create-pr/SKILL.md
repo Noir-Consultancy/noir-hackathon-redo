@@ -41,7 +41,8 @@ title and body in English unless the team decided otherwise.
    resolve them in their next prompt (which runs on the session's own model) or with the
    teammate who changed them. Run this skill again afterwards.
 4. **Issue.** Find the GitHub issue this branch solves: the user's assigned issues
-   (`gh issue list --assignee @me`), the task plan (`docs/tasks/<issue>-…`) or the commits.
+   (`gh issue list --assignee @me`), the task plan (`docs/tasks/<issue>-…`, or `(#N)` in
+   an older plan's heading) or the commits.
    If unclear, ask in one line. Work without an issue (e.g. a small fix) is fine: say so.
 5. **Reviewers.** Take the teammates' GitHub handles from the team table in `AGENTS.md`
    (or `docs/plan.md`), excluding the user (`gh api user -q .login`). If there is no team
@@ -70,10 +71,10 @@ title and body in English unless the team decided otherwise.
    <where to look first, open questions, known limitations, follow-ups>
    ```
 
-7. **Confirm.** If the branch hasn't been reviewed in this session, offer to run the
-   built-in `/code-review` first (and `/security-review` if the change touches input
-   handling, secrets, dependencies or the LLM boundary) and to fix what's worth fixing
-   before pushing. The user may decline. Then show the branch, the
+7. **Confirm.** If the branch hasn't been reviewed in this session, suggest that the
+   user runs `/code-review` first (and `/security-review` if the change touches input
+   handling, secrets, dependencies or the LLM boundary), fixes what's worth fixing and
+   then runs this skill again. The user may decline. Then show the branch, the
    number of commits, the title and the reviewers, and ask for an ok to push and open
    the PR. Continue only after a clear yes.
 8. **Push and open.** `git push -u origin HEAD`, then

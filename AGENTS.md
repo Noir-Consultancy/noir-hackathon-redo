@@ -25,12 +25,13 @@ draft a proposal (e.g. a small PR to `AGENTS.md`) instead of changing it.
   create, update or close GitHub issues. Assign yourself when you start an issue, so
   others see it's taken; unassign if you drop it. One issue = one branch and one PR.
 - **Shared files** (`compose.yaml`, `.env.example`, `AGENTS.md`, `docs/`,
-  `services/api/app/main.py`, `models.py`, `llm.py`, `services/web/src/main.ts`,
-  `events.ts`): change them in small separate commits and tell the team.
-- **Contract, if the team has one.** Interfaces between components (APIs, event
-  schemas, shared data models) may be defined in `docs/contract/`. If so, implement
-  against it and don't change it silently: agree changes with the teammates working
-  on the affected parts and commit them separately.
+  `services/api/app/main.py`, `services/api/app/llm.py`, `services/web/src/main.ts`):
+  change them in small separate commits and tell the team.
+- **Contract.** Interfaces between components are defined in `docs/contract/` and
+  implemented in `services/api/app/models.py`, `services/web/src/api/types.ts` and
+  `services/web/src/events.ts`. Implement against it and don't change any of these
+  silently: agree changes with the teammates working on the affected parts and commit
+  them separately.
 
 ### Configuration and LLM access
 
@@ -70,8 +71,8 @@ adding it.
 
 ### Git
 
-- Branch per issue or task: `<type>/<short-topic>`, with the type from Conventional
-  Commits: `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`, `test/`. E.g.
+- Branch per issue or task: `<type>/<short-topic>`, where the type is one of
+  `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`, `test/`. E.g.
   `feature/minimap`, `fix/nginx-502`.
 - All work goes through branches and PRs.
 - **Ask before pushing.** Commit locally as you go, but never run `git push` (or merge a
@@ -86,14 +87,16 @@ adding it.
   the issue closes on merge. Suggest opening one (see the `create-pr` skill) when a task
   is done. PRs are squash-merged (the only option on GitHub), and merged branches
   are deleted automatically.
-- Start the next task on a new branch from an updated `main`, or from the previous task
-  branch if its PR isn't merged yet and you need its changes (say so in the PR, and
-  merge `origin/main` once it is).
+- Start the next task on a new branch from an updated `main`. Prefer waiting for a PR
+  to merge over stacking branches: with squash merges a stacked branch gets the same
+  changes twice. If you must stack, rebase it onto `main` once the first PR is merged
+  (`git rebase --onto origin/main <old-branch>`) and say so in the PR.
 
 ## Personal defaults
 
 Each member may adjust these. Apply the user's changes for the session and, if they
-want, save them in a gitignored local file (`CLAUDE.local.md` for Claude Code). Never put personal preferences in shared files.
+want, save them in a gitignored local file (`CLAUDE.local.md` for Claude Code,
+`AGENTS.local.md` for other agents). Never put personal preferences in shared files.
 Personal preferences may tighten team rules, not loosen them. When the user corrects the same thing
 twice, suggest saving it.
 
@@ -108,7 +111,7 @@ like this, before any planning or code. The user leads; skip anything they wave 
    changes, issues assigned to them (`gh issue list --assignee @me`) and their task plans
    in `docs/tasks/`, their open and recently merged PRs (`gh pr list --author @me --state
    all`), open unassigned issues and what is new on `origin/main`. In a first session
-   (no preferences file, branch or task plan of theirs yet), also check the tools and
+   (no local preferences file and no PRs of theirs yet), also check the tools and
    versions under *Project → Setup*; later, only when something fails.
 3. **Briefing** (≤ 6 lines, user's language): the project in one sentence the first
    time; where they are now. In a first session, add each setup blocker
@@ -157,8 +160,8 @@ like this, before any planning or code. The user leads; skip anything they wave 
 
 ## Skills
 
-The team uses Claude Code (`CLAUDE.md` imports this file). It may change these skills or
-add new ones for recurring tasks.
+The team uses Claude Code (`CLAUDE.md` imports this file); the slash commands below are
+its built-in skills. The team may change these or add new ones for recurring tasks.
 - `create-pr` (`.claude/skills/create-pr/`): small PR with `Closes #<issue>` and teammates
   as reviewers.
 - `/code-review` (built in): before opening a PR, and `/code-review <PR#>` for a
