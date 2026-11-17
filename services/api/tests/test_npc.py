@@ -139,62 +139,59 @@ def test_model_offering_again_does_not_set_offered_quest_id():
     assert reply.offered_quest_id is None and "redan framme" in reply.reply
 
 
-def test_remark_without_cards_is_none_without_llm(fake_llm):
-    assert npc.remark(get_mentor("vera"), _player("remark-none")).remark is None
-    assert fake_llm.seen == []
+def test_remark_without_cards_skips_the_card_angle(fake_llm, monkeypatch):
+    monkeypatch.setattr(npc.random, "choice", lambda options: options[-1])
+    reply = npc.remark(get_mentor("vera"), _player("remark-none")).remark
+    assert reply.startswith("svar 1|Du är bibliotekarien")
+    prompt = fake_llm.seen[0][0].text
+    assert "inte lärt sig något" in prompt
+    assert npc.REMARK_ANGLES["card"][0][:20] not in prompt
 
 
-def test_remark_once_per_new_card(fake_llm):
+def test_remark_is_new_on_every_call(fake_llm):
     vera = get_mentor("vera")
-    pid = _player("remark-once")
+    pid = _player("remark-again")
     _complete(pid, "q-karl-1")
-    first = npc.remark(vera, pid).remark
-    assert first.startswith("svar 1|Du är bibliotekarien")
-    assert "Kontextfönstret" in fake_llm.seen[0][0].text
-    assert npc.remark(vera, pid).remark is None
-    assert npc.remark(get_mentor("ada"), pid).remark is not None  # other mentors still comment
-    _complete(pid, "q-ada-1")
     assert npc.remark(vera, pid).remark is not None
+    assert npc.remark(vera, pid).remark is not None
+    assert len(fake_llm.seen) == 2
 
 
-def test_remark_llm_failure_is_none_and_retried(fake_llm, monkeypatch):
-    vera = get_mentor("vera")
-    pid = _player("remark-fail")
-    _complete(pid, "q-karl-1")
+def test_remark_skips_quest_teaser_when_quest_is_done(fake_llm, monkeypatch):
+    seen: list[list[str]] = []
+    monkeypatch.setattr(npc.random, "choice", lambda options: seen.append(options) or options[0])
+    pid = _player("remark-done")
+    _complete(pid, "q-vera-1")
+    npc.remark(get_mentor("vera"), pid)
+    assert "quest" not in seen[0] and "card" in seen[0]
 
+
+def test_remark_llm_failure_is_none(fake_llm, monkeypatch):
     class Broken:
         def invoke(self, messages):
             raise TimeoutError("slow")
 
     monkeypatch.setattr(npc, "get_chat_model", lambda: Broken())
-    assert npc.remark(vera, pid).remark is None
-    monkeypatch.setattr(npc, "get_chat_model", lambda: fake_llm)
-    assert npc.remark(vera, pid).remark is not None
+    assert npc.remark(get_mentor("vera"), _player("remark-fail")).remark is None
 
 
-def test_remark_names_the_teacher_and_one_angle(fake_llm):
+def test_remark_names_the_teacher(fake_llm, monkeypatch):
+    monkeypatch.setattr(npc.random, "choice", lambda options: options[-1])
     pid = _player("remark-prompt")
     _complete(pid, "q-karl-1")
     npc.remark(get_mentor("vera"), pid)
     npc.remark(get_mentor("karl"), pid)
     vera_prompt, karl_prompt = (m[0].text for m in fake_llm.seen)
     assert "från Kontext-Karl" in vera_prompt and "från dig" in karl_prompt
-    assert sum(angle in vera_prompt for angle, _ in npc.REMARK_ANGLES.values()) <= 1
 
 
-def test_empty_remark_does_not_use_up_the_card(fake_llm, monkeypatch):
-    vera = get_mentor("vera")
-    pid = _player("remark-empty")
-    _complete(pid, "q-karl-1")
-
+def test_empty_remark_is_none(fake_llm, monkeypatch):
     class Thinking:
         def invoke(self, messages):
             return AIMessage(content="<think>hmm</think>  ")
 
     monkeypatch.setattr(npc, "get_chat_model", lambda: Thinking())
-    assert npc.remark(vera, pid).remark is None
-    monkeypatch.setattr(npc, "get_chat_model", lambda: fake_llm)
-    assert npc.remark(vera, pid).remark is not None
+    assert npc.remark(get_mentor("vera"), _player("remark-empty")).remark is None
 
 
 def test_boss_prompt_has_lecture_but_not_the_answers():

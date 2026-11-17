@@ -41,7 +41,6 @@ _ASKS_FOR_QUEST = re.compile(r"\b(quest|utmaning|uppdrag)", re.IGNORECASE)
 _checkpointer = InMemorySaver()
 _agents: dict[str, object] = {}
 _offered: set[str] = set()  # threads where the quest has been offered
-_remarked: set[str] = set()  # "player:mentor:card" the mentor has commented on
 
 REMARK_PROMPT = """
 Spelaren går förbi dig. Säg spontant en enda kort mening (högst 15 ord) på svenska, i din
@@ -50,8 +49,8 @@ roll och med du-tilltal.
 Det här ska repliken göra: {angle}
 Exempel på stilen (härma inte innehållet): "{example}"
 
-Bakgrund: spelaren har lärt sig {cards}, senast "{title}" från {teacher}. Börja inte med att
-återge vad spelaren lärt sig, och hitta inte på något om hen. Skriv bara repliken.
+{background} Börja inte med att återge vad spelaren lärt sig, och hitta inte på något om
+hen. Skriv bara repliken.
 """
 
 # One angle is picked at random per remark, so remarks don't all sound the same.
@@ -134,31 +133,37 @@ def chat(mentor: MentorDef, player_id: str, message: str) -> ChatReply:
 
 
 def remark(mentor: MentorDef, player_id: str) -> Remark:
-    """A one-sentence remark, once per card the player has that this mentor hasn't remarked on."""
+    """A new one-sentence remark from a random angle; None if the LLM fails."""
     progress = get_progress(player_id)
     cards = progress.cards if progress else []
-    new = [c for c in cards if f"{player_id}:{mentor.id}:{c.id}" not in _remarked]
-    if not new:
-        return Remark(remark=None)
-    card = new[-1]
-    teacher = (
-        "dig"
-        if card.mentor_id == mentor.id
-        else getattr(get_mentor(card.mentor_id), "name", "en mentor")
-    )
     angles = [
-        a for a in REMARK_ANGLES if a != "quest" or not quest_done(player_id, mentor.quest_id)
+        a
+        for a in REMARK_ANGLES
+        if (a != "quest" or not quest_done(player_id, mentor.quest_id)) and (a != "card" or cards)
     ]
     angle, example = REMARK_ANGLES[random.choice(angles)]
     quest = get_quest(mentor.quest_id)
+    card = random.choice(cards) if cards else None
+    if card:
+        teacher = (
+            "dig"
+            if card.mentor_id == mentor.id
+            else getattr(get_mentor(card.mentor_id), "name", "en mentor")
+        )
+        titles = ", ".join(f'"{c.title}"' for c in cards)
+        background = (
+            f'Bakgrund: spelaren har lärt sig {titles}, bl.a. "{card.title}" från {teacher}.'
+        )
+    else:
+        background = "Bakgrund: spelaren har inte lärt sig något än."
     prompt = REMARK_PROMPT.format(
         angle=angle.format(
-            topics=", ".join(mentor.topics), quest=quest.title if quest else "", title=card.title
+            topics=", ".join(mentor.topics),
+            quest=quest.title if quest else "",
+            title=card.title if card else "",
         ),
         example=example,
-        cards=", ".join(f'"{c.title}"' for c in cards),
-        title=card.title,
-        teacher=teacher,
+        background=background,
     )
     try:
         reply = get_chat_model().invoke(
@@ -170,6 +175,4 @@ def remark(mentor: MentorDef, player_id: str) -> Remark:
     text = _THINK.sub("", reply.text).strip()
     if not text:
         log.warning("Empty remark from mentor %s", mentor.id)
-        return Remark(remark=None)
-    _remarked.add(f"{player_id}:{mentor.id}:{card.id}")
-    return Remark(remark=text)
+    return Remark(remark=text or None)

@@ -41,4 +41,4 @@ def test_remark_unknown_mentor_or_player():
     )
     assert client.post("/npcs/ada/remark", json={"player_id": "missing"}).status_code == 404
     reply = client.post("/npcs/ada/remark", json={"player_id": player["player_id"]})
-    assert reply.json() == {"remark": None}
+    assert isinstance(reply.json()["remark"], str)
