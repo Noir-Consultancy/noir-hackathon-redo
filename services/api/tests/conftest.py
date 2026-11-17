@@ -48,7 +48,6 @@ def fake_llm(monkeypatch):
     monkeypatch.setattr(npc, "get_chat_model", lambda: model)
     npc._agents.clear()
     npc._offered.clear()
-    npc._remarked.clear()
     yield model
     npc._agents.clear()
 

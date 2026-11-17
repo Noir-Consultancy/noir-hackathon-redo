@@ -9,7 +9,7 @@ de något kort och nytt som bygger på det spelaren redan lärt sig.
    och väljer en ny.
 2. Är spelaren nära, eller är en dialog öppen, stannar mentorn och vänder sig mot
    spelaren.
-3. Första gången spelaren kommer nära en mentor (per närmande) frågar spelet api:t efter
+3. När spelaren kommer nära en mentor (högst var 30:e sekund per mentor) frågar spelet api:t efter
    en kommentar. Medan den laddas visar mentorn en bubbla med "…". Sedan byts den mot
    kommentaren (eller försvinner om det inte finns någon). Den står kvar så länge
    spelaren är nära och försvinner 3 s efter att hen gått. Har spelaren redan gått visas
@@ -21,9 +21,9 @@ de något kort och nytt som bygger på det spelaren redan lärt sig.
   agenten) med mentorns persona och en slumpad vinkel med eget exempel: fråga, tips,
   teaser för mentorns quest eller koppling till kortet. Spelarens kort och vem som lärt
   ut dem är bakgrund. En mening, högst 15 ord, på svenska, i roll.
-- **Frekvens:** en kommentar per mentor och nytt kort. Servern minns vilka kort varje
-  mentor redan kommenterat för spelaren (i minnet, som `_offered`). Inga nya kort ger
-  `null` utan LLM-anrop. Misslyckas LLM-anropet loggas det och svaret blir `null`.
+- **Frekvens:** en ny kommentar vid varje närmande, högst var 30:e sekund per mentor
+  (styrs i spelet). Ingen cache eller bokföring på servern. Misslyckas LLM-anropet
+  loggas det och svaret blir `null`.
 - Kommentaren sparas inte i chattens minne i första versionen.
 - **web** (`WorldScene.ts`): mentorerna får dynamiska, orörliga kroppar så att de kan
   röra sig men inte knuffas. Namn och questmarkör följer med. Rutvalet görs i en ren
@@ -44,8 +44,9 @@ Ny endpoint, bakåtkompatibel (egen commit, berättas för teamet):
 - `openapi.yaml`, `models.md`, `models.py`, `types.ts`. Inga nya händelser på bussen.
 
 ## Test
-- api, med falsk modell: inga kort ger `null` utan LLM-anrop; nytt kort ger en kommentar;
-  samma kort igen ger `null`; okänd mentor/spelare ger 404.
+- api, med falsk modell: varje anrop ger en ny kommentar; utan kort hoppas kortvinkeln
+  över; misslyckat eller tomt LLM-svar ger `null`; okänd mentor/spelare ger 404.
 - web: `wander.ts` väljer bara fria rutor inom zonen och aldrig en dörr.
 - Manuellt: mentorerna går runt, stannar när man närmar sig, "…" visas medan det laddar,
-  kommentaren visas en gång per nytt kort (även om man gått därifrån), `E` fungerar även när mentorn rört sig.
+  en ny kommentar visas vid varje närmande efter 30 s (även om man gått därifrån), `E`
+  fungerar även när mentorn rört sig.
