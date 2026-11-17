@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AttemptResult } from "../api/types";
-import { rewardLine } from "./quest";
+import type { AttemptResult, Quest } from "../api/types";
+import { answerError, rewardLine } from "./quest";
 
 const base: AttemptResult = {
   passed: true,
@@ -39,5 +39,30 @@ describe("rewardLine", () => {
 
   it("is empty when nothing was awarded", () => {
     expect(rewardLine({ ...base, xp_awarded: 0 })).toBe("");
+  });
+});
+
+describe("answerError", () => {
+  const quest: Quest = {
+    id: "q-ada-1",
+    mentor_id: "ada",
+    title: "Granska",
+    task: "Förklara.",
+    kind: "explain",
+    xp: 50,
+    card_id: "c",
+    statements: [],
+  };
+  const boss: Quest = { ...quest, id: "q-oracle-1", kind: "boss", statements: ["a", "b"] };
+
+  it("lets a normal answer through and silently skips an empty one", () => {
+    expect(answerError(quest, "Mitt svar", [])).toBeNull();
+    expect(answerError(quest, "", [])).toBe("");
+  });
+
+  it("asks a boss answer for both marked claims and a motivation", () => {
+    expect(answerError(boss, "För att…", [])).toMatch(/Kryssa/);
+    expect(answerError(boss, "", [1])).toMatch(/Motivera/);
+    expect(answerError(boss, "För att…", [1])).toBeNull();
   });
 });

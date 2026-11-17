@@ -3,6 +3,14 @@ import { attemptQuest } from "../api/client";
 import type { AttemptResult, Progress, Quest } from "../api/types";
 import { el } from "./dom";
 
+/** Why the answer can't be sent yet, or null. Boss quests need at least one marked claim. */
+export function answerError(quest: Quest, text: string, selected: number[]): string | null {
+  if (!text) return quest.kind === "boss" ? "Motivera varför påståendena är fel." : "";
+  if (quest.kind === "boss" && selected.length === 0)
+    return "Kryssa i de påståenden du tror är fel.";
+  return null;
+}
+
 /** Short reward summary shown after a passed attempt, e.g. "+50 XP · Nytt kort: X". */
 export function rewardLine(result: AttemptResult): string {
   const parts: string[] = [];
@@ -25,12 +33,20 @@ export function questBox(
     rows: 3,
   });
   const submit = el("button", { type: "submit" }, "Skicka svar");
+  // Boss quests: one checkbox per claim; the player marks the wrong ones.
+  const checkboxes = quest.statements.map(() => el("input", { type: "checkbox" }));
+  const statements = el(
+    "ol",
+    { className: "quest-statements" },
+    ...quest.statements.map((s, i) => el("li", {}, el("label", {}, checkboxes[i], " ", s))),
+  );
   const form = el("form", { className: "quest-form" }, answer, submit);
   const box = el(
     "section",
     { className: "quest" },
     el("h3", {}, quest.title, " ", status),
     el("p", { className: "quest-task" }, quest.task),
+    ...(quest.statements.length > 0 ? [statements] : []),
     el("p", { className: "quest-xp" }, `${quest.xp} XP`),
     form,
     feedback,
@@ -40,6 +56,7 @@ export function questBox(
     box.classList.add("done");
     status.textContent = "Klarad ✓";
     form.remove();
+    for (const box of checkboxes) box.disabled = true;
   };
   if (completed) markCompleted();
 
@@ -55,13 +72,19 @@ export function questBox(
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = answer.value.trim();
-    if (!text) return;
+    const selected = checkboxes.flatMap((box, i) => (box.checked ? [i] : []));
+    const error = answerError(quest, text, selected);
+    if (error !== null) {
+      feedback.className = "quest-feedback failed";
+      feedback.textContent = error;
+      return;
+    }
     submit.disabled = true;
     feedback.className = "quest-feedback";
     feedback.textContent = "Bedömer ditt svar…";
     let result: AttemptResult;
     try {
-      result = await attemptQuest(quest.id, playerId, text);
+      result = await attemptQuest(quest.id, playerId, text, selected);
     } catch {
       feedback.textContent = "Kunde inte skicka svaret. Försök igen.";
       feedback.classList.add("failed");
