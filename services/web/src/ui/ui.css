@@ -399,15 +399,16 @@ body {
   background: var(--panel);
   border-radius: 6px;
   font-size: 0.9em;
+  line-height: 1.4;
 }
 
 .controls[hidden] {
   display: none;
 }
 
+/* Same box in both states, so the button doesn't jump; only the background goes. */
 .controls.collapsed {
-  padding: 0;
-  background: none;
+  background: transparent;
 }
 
 .controls.collapsed .controls-text {
