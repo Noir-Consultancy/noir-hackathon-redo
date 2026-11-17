@@ -283,3 +283,144 @@ body {
 .panel .error:empty {
   display: none;
 }
+
+.codex {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.codex h2,
+.codex h3 {
+  margin: 4px 0;
+}
+
+.codex small {
+  font-weight: normal;
+  opacity: 0.7;
+}
+
+.codex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.codex-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 110px;
+  padding: 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--mentor);
+  border-top-width: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.codex-card:hover,
+.codex-card.selected {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.codex-card.locked {
+  align-items: center;
+  justify-content: center;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.2em;
+  cursor: default;
+}
+
+.codex-mentor {
+  font-size: 0.8em;
+  color: var(--mentor);
+  font-weight: bold;
+}
+
+.codex-detail {
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.codex-detail p {
+  margin: 6px 0;
+}
+
+.codex-badges,
+.codex-quests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  padding: 4px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
+
+.badge.locked {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.9em;
+}
+
+.codex-quests {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.codex-empty {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.controls {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-radius: 6px;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.controls[hidden] {
+  display: none;
+}
+
+/* Same box in both states, so the button doesn't jump; only the background goes. */
+.controls.collapsed {
+  background: transparent;
+}
+
+.controls.collapsed .controls-text {
+  display: none;
+}
+
+.controls-toggle {
+  font: inherit;
+  padding: 2px 8px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+}

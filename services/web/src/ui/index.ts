@@ -1,7 +1,9 @@
-// UI overlay (owner: package 2): name prompt, HUD and a minimal dialog panel.
+// UI overlay (owner: package 2): name prompt, HUD, dialog panel and codex.
 import { chat, createPlayer, getProgress, getWorld } from "../api/client";
 import type { Progress, World } from "../api/types";
 import { bus } from "../events";
+import { codexPanel } from "./codex";
+import { createControls } from "./controls";
 import { el } from "./dom";
 import { createHud, rewardEvents } from "./hud";
 import { createNotifier } from "./notify";
@@ -14,9 +16,12 @@ export function startUi(root: HTMLElement): void {
   const hud = createHud();
   root.append(hud.root);
   const notify = createNotifier(root);
+  const controls = createControls();
+  root.append(controls.root);
 
   let playerId = "";
   let progress: Progress | null = null;
+  let modalOpen = false; // the mentor dialog is open
   let world: Promise<World> | null = null;
   const loadWorld = () => {
     world ??= getWorld().catch((err) => {
@@ -41,6 +46,7 @@ export function startUi(root: HTMLElement): void {
       // Storage unavailable: the player just enters the name again next time.
     }
     renderHud(p);
+    controls.show();
     bus.emit("player:ready", { playerId });
   };
 
@@ -70,6 +76,7 @@ export function startUi(root: HTMLElement): void {
   };
 
   const openDialog = async (npcId: string) => {
+    modalOpen = true;
     bus.emit("ui:modal-open", {});
     const log = el("div", { className: "log" });
     const input = el("input", { placeholder: "Fråga mentorn…" });
@@ -130,6 +137,7 @@ export function startUi(root: HTMLElement): void {
     const done = () => {
       panel.remove();
       window.removeEventListener("keydown", onKey);
+      modalOpen = false;
       bus.emit("ui:modal-close", {});
     };
     close.addEventListener("click", done);
@@ -149,6 +157,30 @@ export function startUi(root: HTMLElement): void {
   };
 
   bus.on("npc:interact", ({ npcId }) => void openDialog(npcId));
+
+  // Codex on C. Only while playing: not before the name is set or over another modal.
+  let codex: HTMLElement | null = null;
+  const closeCodex = () => {
+    if (!codex) return;
+    codex.remove();
+    codex = null;
+    bus.emit("ui:modal-close", {});
+  };
+  const openCodex = async () => {
+    if (!progress) return;
+    const w = await loadWorld().catch(() => null);
+    if (!w || !progress || modalOpen || codex) return;
+    bus.emit("ui:modal-open", {});
+    codex = codexPanel(w, progress, closeCodex);
+    root.append(codex);
+  };
+  window.addEventListener("keydown", (e) => {
+    // Holding C or pressing Cmd/Ctrl+C (copy) should not toggle the codex.
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+    if (codex && (e.key === "Escape" || (!typing && e.key.toLowerCase() === "c"))) closeCodex();
+    else if (!codex && !typing && !modalOpen && e.key.toLowerCase() === "c") void openCodex();
+  });
 
   let saved: string | null = null;
   try {
