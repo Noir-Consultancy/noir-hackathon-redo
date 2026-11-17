@@ -10,6 +10,8 @@ export interface MapData {
   walls: number[][]; // [y][x] tile index, EMPTY = walkable
   spawn: Point; // tile coordinates
   doors: Point[];
+  /** Which two zones (indices into zones) each door connects; same order as doors. */
+  doorZones: [number, number][];
 }
 
 const DOOR_WIDTH = 3;
@@ -54,7 +56,7 @@ export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
   );
 
   // Borders between zones: a cell whose right or lower neighbour is another zone.
-  const borders = new Map<string, Point[]>();
+  const borders = new Map<string, { zones: [number, number]; cells: Point[] }>();
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const here = zoneAt(x, y);
@@ -62,14 +64,17 @@ export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
         if (here < 0 || other < 0 || other === here) continue;
         walls[y][x] = WALL;
         const key = [here, other].sort().join("|");
-        borders.set(key, [...(borders.get(key) ?? []), { x, y }]);
+        const border = borders.get(key) ?? { zones: [here, other], cells: [] };
+        border.cells.push({ x, y });
+        borders.set(key, border);
       }
     }
   }
 
   // A door in the middle of each shared border.
   const doors: Point[] = [];
-  for (const cells of borders.values()) {
+  const doorZones: [number, number][] = [];
+  for (const { zones: pair, cells } of borders.values()) {
     const unique = [...new Map(cells.map((c) => [`${c.x},${c.y}`, c])).values()];
     unique.sort((a, b) => a.x - b.x || a.y - b.y);
     const mid = Math.floor(unique.length / 2);
@@ -77,6 +82,7 @@ export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
     for (const cell of unique.slice(start, start + DOOR_WIDTH)) {
       walls[cell.y][cell.x] = EMPTY;
       doors.push(cell);
+      doorZones.push(pair);
     }
   }
 
@@ -104,7 +110,7 @@ export function buildMap(zones: Zone[], mentors: Mentor[]): MapData {
     for (const p of placed) walls[p.y][p.x] = EMPTY;
   }
 
-  return { width, height, ground, walls, spawn, doors };
+  return { width, height, ground, walls, spawn, doors, doorZones };
 }
 
 /** The free cell in the zone closest to its centre, not on a wall or a mentor. */

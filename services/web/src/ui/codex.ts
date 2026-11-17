@@ -8,6 +8,8 @@ export interface CodexCard {
   color: string;
   /** Full card when unlocked, null while it is still "???". */
   card: Card | null;
+  /** Level needed to reach the mentor's zone, when above the player's level. */
+  requiredLevel: number | null;
 }
 
 /** All cards in the world, in world order, with the unlocked ones filled in. */
@@ -15,11 +17,14 @@ export function codexCards(world: World, progress: Progress): CodexCard[] {
   const unlocked = new Map(progress.cards.map((c) => [c.id, c]));
   return world.cards.map((c) => {
     const mentor = world.mentors.find((m) => m.id === c.mentor_id);
+    const zone = world.zones.find((z) => z.id === mentor?.zone_id);
+    const needed = zone?.required_level ?? 1;
     return {
       id: c.id,
       mentor: mentor?.name ?? "",
       color: mentor?.color ?? "#888",
       card: unlocked.get(c.id) ?? null,
+      requiredLevel: needed > progress.level ? needed : null,
     };
   });
 }
@@ -56,8 +61,8 @@ export function codexPanel(world: World, progress: Progress, onClose: () => void
     const tile = el(
       "button",
       { type: "button", className: c.card ? "codex-card" : "codex-card locked" },
-      c.card ? el("span", { className: "codex-mentor" }, c.mentor) : "?",
-      c.card ? c.card.title : "???",
+      c.card ? el("span", { className: "codex-mentor" }, c.mentor) : c.requiredLevel ? "🔒" : "?",
+      c.card ? c.card.title : c.requiredLevel ? `Kräver nivå ${c.requiredLevel}` : "???",
     );
     tile.style.setProperty("--mentor", c.color);
     if (c.card) {

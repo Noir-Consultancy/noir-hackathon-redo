@@ -18,6 +18,7 @@ function map(): MapData {
     walls,
     spawn: { x: 2, y: 2 },
     doors: [{ x: 5, y: 5 }],
+    doorZones: [[0, 1]],
   };
 }
 

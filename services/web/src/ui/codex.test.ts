@@ -55,8 +55,29 @@ const progress: Progress = {
 describe("codexCards", () => {
   it("fills in unlocked cards and keeps the rest locked, in world order", () => {
     expect(codexCards(world, progress)).toEqual([
-      { id: "c-ada", mentor: "Ada", color: "#e07a5f", card: unlocked },
-      { id: "c-karl", mentor: "Karl", color: "#3d5a80", card: null },
+      { id: "c-ada", mentor: "Ada", color: "#e07a5f", card: unlocked, requiredLevel: null },
+      { id: "c-karl", mentor: "Karl", color: "#3d5a80", card: null, requiredLevel: null },
+    ]);
+  });
+
+  it("shows the level needed for cards in locked zones", () => {
+    const zoned: World = {
+      ...world,
+      zones: [
+        {
+          id: "z",
+          name: "Z",
+          topic: "",
+          bounds: { x: 0, y: 0, w: 1, h: 1 },
+          color: "#000",
+          required_level: 2,
+        },
+      ],
+    };
+    expect(codexCards(zoned, progress).map((c) => c.requiredLevel)).toEqual([2, 2]);
+    expect(codexCards(zoned, { ...progress, level: 2 }).map((c) => c.requiredLevel)).toEqual([
+      null,
+      null,
     ]);
   });
 
