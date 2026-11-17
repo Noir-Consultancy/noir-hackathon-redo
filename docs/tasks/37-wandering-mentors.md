@@ -11,21 +11,24 @@ de något kort och nytt som bygger på det spelaren redan lärt sig.
    spelaren.
 3. Första gången spelaren kommer nära en mentor (per närmande) frågar spelet api:t efter
    en kommentar. Medan den laddas visar mentorn en bubbla med "…". Sedan byts den mot
-   kommentaren (eller försvinner om det inte finns någon) och visas i några sekunder,
-   även om spelaren hunnit gå därifrån.
-4. `E` öppnar dialogen som vanligt.
+   kommentaren (eller försvinner om det inte finns någon). Den står kvar så länge
+   spelaren är nära och försvinner 3 s efter att hen gått. Har spelaren redan gått visas
+   den en kort lästid.
+4. `E` öppnar dialogen som vanligt, och kommentaren släpps.
 
 ## Angreppssätt
 - **api** (`app/npc`): ny funktion `remark(mentor, player_id)`. Ett enkelt LLM-anrop (inte
-  agenten) med mentorns persona, ämnen, spelarens kort (titel och sammanfattning) och
-  2–3 exempel på bra kommentarer i prompten. Högst 2 meningar, på svenska, i roll.
+  agenten) med mentorns persona och en slumpad vinkel med eget exempel: fråga, tips,
+  teaser för mentorns quest eller koppling till kortet. Spelarens kort och vem som lärt
+  ut dem är bakgrund. En mening, högst 15 ord, på svenska, i roll.
 - **Frekvens:** en kommentar per mentor och nytt kort. Servern minns vilka kort varje
   mentor redan kommenterat för spelaren (i minnet, som `_offered`). Inga nya kort ger
   `null` utan LLM-anrop. Misslyckas LLM-anropet loggas det och svaret blir `null`.
 - Kommentaren sparas inte i chattens minne i första versionen.
 - **web** (`WorldScene.ts`): mentorerna får dynamiska, orörliga kroppar så att de kan
   röra sig men inte knuffas. Namn och questmarkör följer med. Rutvalet görs i en ren
-  hjälpfunktion i `game/wander.ts` (fri ruta inom zonens `bounds`, inte i en dörr).
+  hjälpfunktion i `game/wander.ts`: bara öppna rutor (alla grannar fria) inom zonens
+  `bounds`, så en mentor som stannar aldrig blockerar en passage eller dörr.
 - Pratbubblan ritas i spelet (Phaser-text med bakgrund), inte i UI:t. Spelet anropar
   api:t direkt via `client.ts`, som det redan gör med `getProgress`.
 

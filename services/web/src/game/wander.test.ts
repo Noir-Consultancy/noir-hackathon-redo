@@ -24,20 +24,23 @@ function map(): MapData {
 const bounds = { x: 0, y: 0, w: 5, h: 10 }; // left zone, excluding the wall column
 const from = { x: 2, y: 2 };
 
-function allPaths(): Point[][] {
+function allPaths(m = map()): Point[][] {
   const paths: Point[][] = [];
   for (let i = 0; i < 200; i++) {
-    const path = pickWanderPath(map(), bounds, from, () => i / 200);
+    const path = pickWanderPath(m, bounds, from, () => i / 200);
     if (path) paths.push(path);
   }
   return paths;
 }
 
 describe("pickWanderPath", () => {
-  it("only targets free cells in the zone, away from doors", () => {
+  it("only targets open cells in the zone, away from walls and doors", () => {
     const m = map();
+    expect(allPaths().length).toBeGreaterThan(0);
     for (const [, target] of allPaths()) {
-      expect(m.walls[target.y][target.x]).toBe(EMPTY);
+      for (let y = target.y - 1; y <= target.y + 1; y++) {
+        for (let x = target.x - 1; x <= target.x + 1; x++) expect(m.walls[y][x]).toBe(EMPTY);
+      }
       expect(target.x).toBeLessThan(5);
       expect(Math.abs(target.x - 5) > 1 || Math.abs(target.y - 5) > 1).toBe(true);
       expect(target).not.toEqual(from);
@@ -50,13 +53,23 @@ describe("pickWanderPath", () => {
     }
   });
 
+  it("never walks past a cell next to an obstacle", () => {
+    const m = map();
+    m.walls[2][4] = WALL; // blocks the open cell (3, 2) on the way right
+    for (const [corner] of allPaths(m)) expect(corner.x).toBeLessThanOrEqual(2);
+  });
+
+  it("can leave a start cell that isn't open", () => {
+    expect(pickWanderPath(map(), bounds, { x: 1, y: 3 })).toBeDefined();
+  });
+
   it("returns undefined when boxed in", () => {
     const m = map();
     for (const [x, y] of [
-      [1, 2],
-      [3, 2],
       [2, 1],
       [2, 3],
+      [1, 2],
+      [3, 2],
     ])
       m.walls[y][x] = WALL;
     expect(pickWanderPath(m, bounds, from)).toBeUndefined();

@@ -1,12 +1,12 @@
-// Where a mentor walks next: a nearby free cell in its zone, reached by a straight L-shaped
-// path (first along x, then y) over free cells only, so no pathfinding or wall collision
-// is needed. Pure, so testable.
+// Where a mentor walks next: a nearby cell in its zone, reached by a straight L-shaped path
+// (first along x, then y), so no pathfinding or wall collision is needed. The path only
+// crosses open cells (all eight neighbours walkable), so a mentor that stops on the way can
+// never block a passage or a door. Pure, so testable.
 import type { Point, Rect } from "../api/types";
 import type { MapData } from "./mapgen";
 import { EMPTY } from "./tiles";
 
 const RADIUS = 4; // tiles from the current cell
-const DOOR_CLEARANCE = 1; // never stand in or next to a door
 
 /** Waypoints (corner, then target) in tile coordinates, or undefined if nowhere to go. */
 export function pickWanderPath(
@@ -15,21 +15,24 @@ export function pickWanderPath(
   from: Point,
   random: () => number = Math.random,
 ): Point[] | undefined {
-  const free = (x: number, y: number) =>
-    x >= bounds.x &&
-    y >= bounds.y &&
-    x < bounds.x + bounds.w &&
-    y < bounds.y + bounds.h &&
-    map.walls[y]?.[x] === EMPTY &&
-    !map.doors.some(
-      (d) => Math.abs(d.x - x) <= DOOR_CLEARANCE && Math.abs(d.y - y) <= DOOR_CLEARANCE,
-    );
+  const inZone = (x: number, y: number) =>
+    x >= bounds.x && y >= bounds.y && x < bounds.x + bounds.w && y < bounds.y + bounds.h;
+  const open = (x: number, y: number) => {
+    if (!inZone(x, y)) return false;
+    for (let ny = y - 1; ny <= y + 1; ny++) {
+      for (let nx = x - 1; nx <= x + 1; nx++) if (map.walls[ny]?.[nx] !== EMPTY) return false;
+    }
+    return true;
+  };
+  // Every cell after `a` up to and including `b` (the start cell is where the mentor already is).
   const clear = (a: Point, b: Point) => {
     const [dx, dy] = [Math.sign(b.x - a.x), Math.sign(b.y - a.y)];
-    for (let x = a.x, y = a.y; ; x += dx, y += dy) {
-      if (!free(x, y)) return false;
-      if (x === b.x && y === b.y) return true;
+    for (let x = a.x, y = a.y; x !== b.x || y !== b.y; ) {
+      x += dx;
+      y += dy;
+      if (!open(x, y)) return false;
     }
+    return true;
   };
 
   const options: Point[][] = [];
