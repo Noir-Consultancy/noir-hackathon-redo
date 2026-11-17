@@ -11,9 +11,10 @@ function onFadedOut(node: HTMLElement, then?: () => void): void {
   });
 }
 
-export function createNotifier(root: HTMLElement) {
+/** Banners go in `root`; toasts stack in `toastHost` (defaults to `root`). */
+export function createNotifier(root: HTMLElement, toastHost: HTMLElement = root) {
   const toasts = el("div", { className: "toasts" });
-  root.append(toasts);
+  toastHost.append(toasts);
 
   const bannerQueue: string[] = [];
   let showingBanner = false;

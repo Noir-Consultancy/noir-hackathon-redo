@@ -20,7 +20,7 @@ export function startUi(root: HTMLElement): void {
     location.reload();
   });
   root.append(hud.root);
-  const notify = createNotifier(root);
+  const notify = createNotifier(root, hud.topRight);
   const controls = createControls();
   root.append(controls.root);
 
