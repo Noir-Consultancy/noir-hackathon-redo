@@ -46,6 +46,8 @@ def offer_quest(config: RunnableConfig) -> tuple[str, str | None]:
     quest = get_quest(get_mentor(mentor_id).quest_id)
     if quest_done(player_id, quest.id):
         return f'Du har redan klarat min utmaning "{quest.title}". Fråga gärna vidare!', None
+    if config["configurable"].get("quest_offered"):
+        return "Utmaningen ligger redan framme, svara i rutan när du vill.", None
     return f'Då har jag en utmaning åt dig: "{quest.title}". Lycka till!', quest.id
 
 
